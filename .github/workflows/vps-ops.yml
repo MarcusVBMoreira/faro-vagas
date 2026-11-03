@@ -43,9 +43,15 @@ jobs:
           ssh-keyscan -p 22 "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Rodar ${{ steps.pick.outputs.script }}
+        env:
+          FARO_IA_TOKEN: ${{ secrets.FARO_IA_TOKEN }}
         run: |
           SCRIPT="${{ steps.pick.outputs.script }}"
           SSH="ssh -i $HOME/.ssh/vps_key -o ServerAliveInterval=30 root@${{ secrets.VPS_HOST }}"
-          $SSH "mkdir -p /root/faro-ops"
+          $SSH "mkdir -p /root/faro-ops && chmod 700 /root/faro-ops"
+          # Token da IA (secret FARO_IA_TOKEN): vai por stdin, nunca aparece no log
+          if [ -n "$FARO_IA_TOKEN" ]; then
+            printf '%s' "$FARO_IA_TOKEN" | $SSH "umask 077 && cat > /root/faro-ops/.ia_token"
+          fi
           scp -i ~/.ssh/vps_key "ops/vps/$SCRIPT" "root@${{ secrets.VPS_HOST }}:/root/faro-ops/$SCRIPT"
           $SSH "bash /root/faro-ops/$SCRIPT" </dev/null
