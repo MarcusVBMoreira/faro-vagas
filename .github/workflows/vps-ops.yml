@@ -1,0 +1,51 @@
+# Roda scripts de ops/vps/ no VPS por SSH. Ver ops/vps/README.md
+name: Operações no VPS
+
+on:
+  push:
+    branches: [main]
+    paths: ['ops/vps/**']
+  workflow_dispatch:
+    inputs:
+      script:
+        description: 'Script de ops/vps/ (ex.: 01-ollama-bench.sh)'
+        required: true
+        default: '01-ollama-bench.sh'
+
+concurrency:
+  group: vps-ops
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Rodar script no VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Escolher script
+        id: pick
+        run: |
+          SCRIPT="${{ github.event.inputs.script }}"
+          if [ -z "$SCRIPT" ]; then SCRIPT="$(tr -d '[:space:]' < ops/vps/run.txt)"; fi
+          case "$SCRIPT" in
+            *[!A-Za-z0-9._-]*|'') echo "Nome de script inválido: '$SCRIPT'"; exit 1;;
+          esac
+          test -f "ops/vps/$SCRIPT" || { echo "ops/vps/$SCRIPT não existe"; exit 1; }
+          echo "script=$SCRIPT" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/vps_key
+          chmod 600 ~/.ssh/vps_key
+          ssh-keyscan -p 22 "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Rodar ${{ steps.pick.outputs.script }}
+        run: |
+          SCRIPT="${{ steps.pick.outputs.script }}"
+          SSH="ssh -i $HOME/.ssh/vps_key -o ServerAliveInterval=30 root@${{ secrets.VPS_HOST }}"
+          $SSH "mkdir -p /root/faro-ops"
+          scp -i ~/.ssh/vps_key "ops/vps/$SCRIPT" "root@${{ secrets.VPS_HOST }}:/root/faro-ops/$SCRIPT"
+          $SSH "bash /root/faro-ops/$SCRIPT" </dev/null
