@@ -25,11 +25,23 @@ Mandar todas as vagas para a IA seria caro e lento. O Faro usa um funil em três
 2. **Similaridade semântica**: o perfil e cada vaga viram vetores (embeddings) e o sistema separa as ~20 vagas mais parecidas.
 3. **Avaliação da IA**: só essas 20 vão para o modelo de linguagem, que devolve um JSON validado com nota, pontos fortes, lacunas e explicação.
 
+### IA própria, sem API paga
+
+A IA roda num VPS próprio com **Ollama**, publicada em `ia.marcusmoreira.com.br` atrás de nginx com HTTPS, token e limite de requisições:
+
+| Parte | Como | Por quê |
+|---|---|---|
+| Embeddings | `bge-m3` no VPS (~1 s por vaga) | Rápido em CPU e entende português |
+| Estruturar vagas e currículos | `qwen2.5:3b` no VPS, em fila | Acertou todos os campos no teste; o modelo 1.5b errava nível e tipos |
+| Nota, pontos fortes e lacunas | Código PHP (comparação das listas de habilidades + similaridade) | Resposta exata: no teste, os modelos pequenos inventavam lacunas |
+
+Resultado: custo zero por uso e **currículos que nunca saem dos servidores do projeto** (LGPD). Os testes de desempenho estão em `ops/vps/`.
+
 ## Tecnologias
 
 - **Laravel 12** (PHP 8.3), Blade, Tailwind CSS 4, Vite
 - **MySQL** em produção, filas e cache no próprio banco
-- **IA**: API do Gemini para extração de dados, embeddings e avaliação
+- **IA**: Ollama no VPS (`bge-m3` + `qwen2.5:3b`), acessado pelo Laravel via HTTPS
 - **PHPUnit** com testes rodando em MySQL 8 no **GitHub Actions**
 - **Deploy contínuo** na Hostinger via SSH a cada push na `main`
 
