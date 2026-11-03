@@ -41,4 +41,4 @@ Todos os pares de texto passam no contraste WCAG AA (4.5:1). O âmbar **não** �
 ## Formas
 Grade de 4px. Raios: 6px (badges), 10px (botões), 16px (cards). Ícones de traço 1.75px.
 
-Os tokens estão em `resources/css/app.css`.
+Os tokens do site estão em `resources/css/app.css`. O material completo (logos em SVG e PNG, `tokens.json`, guia da marca e capturas das telas) fica em [`design/`](../design/), pasta que não vai para a hospedagem.
