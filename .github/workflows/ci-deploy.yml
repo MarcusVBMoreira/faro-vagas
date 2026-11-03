@@ -1,0 +1,165 @@
+# Testes em todo push e pull request. Deploy na Hostinger em todo push na main
+# (depois que os testes passam). Passo a passo da configuração: docs/DEPLOY.md
+name: CI e Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    name: Testes (PHP 8.3 + MySQL 8)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: faro_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: faro_test
+      DB_USERNAME: root
+      DB_PASSWORD: root
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, zip, intl
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependências PHP
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Compilar front-end
+        run: |
+          npm ci
+          npm run build
+
+      - name: Preparar .env de teste
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Rodar testes
+        run: php artisan test
+
+      - name: Guardar composer.lock gerado (se o repositório ainda não tiver um)
+        if: hashFiles('composer.lock') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: composer-lock
+          path: composer.lock
+          retention-days: 7
+
+  deploy:
+    name: Deploy na Hostinger
+    needs: tests
+    # Só roda na main e depois que DEPLOY_ENABLED=true for criada em Settings > Variables.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+
+    env:
+      APP_DIR: ${{ secrets.DEPLOY_PATH }}/faro-app
+      PHP_BIN: ${{ vars.PHP_BIN || 'php' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, zip, intl
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Montar versão de produção
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+          npm ci
+          npm run build
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          cat >> ~/.ssh/config <<EOF
+          Host hostinger
+            HostName ${{ secrets.SSH_HOST }}
+            Port ${{ secrets.SSH_PORT }}
+            User ${{ secrets.SSH_USER }}
+            IdentityFile ~/.ssh/deploy_key
+          EOF
+
+      - name: Enviar arquivos (rsync)
+        run: |
+          ssh hostinger "mkdir -p $APP_DIR"
+          rsync -az --delete \
+            --exclude='.git/' --exclude='.github/' --exclude='node_modules/' --exclude='tests/' \
+            --exclude='.env' --exclude='storage/' --exclude='public/storage' --exclude='public/hot' \
+            --exclude='database/*.sqlite' \
+            ./ hostinger:$APP_DIR/
+
+      - name: Gravar .env de produção
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        run: printf '%s\n' "$ENV_FILE" | ssh hostinger "cat > $APP_DIR/.env && chmod 600 $APP_DIR/.env"
+
+      - name: Finalizar no servidor (pastas, banco, cache, public_html)
+        run: |
+          ssh hostinger bash -s <<EOF
+          set -e
+          cd "$APP_DIR"
+
+          # Pastas que o Laravel precisa e que não vão no rsync
+          mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+
+          # A Hostinger bloqueia symlink() no PHP, então o link é criado pelo shell
+          ln -sfn ../storage/app/public public/storage
+
+          $PHP_BIN artisan migrate --force
+          $PHP_BIN artisan db:seed --force
+          $PHP_BIN artisan optimize
+          $PHP_BIN artisan queue:restart
+
+          # public_html passa a apontar para a pasta public do Laravel
+          cd "$(dirname "$APP_DIR")"
+          if [ -d public_html ] && [ ! -L public_html ]; then
+            mv public_html "public_html_backup_\$(date +%Y%m%d%H%M%S)"
+          fi
+          ln -sfn faro-app/public public_html
+          EOF
+
+      - name: Conferir se o site respondeu
+        run: |
+          sleep 3
+          curl --fail --silent --show-error --max-time 20 "${{ vars.APP_URL }}/up" > /dev/null
