@@ -10,6 +10,7 @@ Scripts de manutenção do VPS (`srv1936230.hstgr.cloud`). Eles **não** vão pa
 | Script | O que faz |
 |---|---|
 | `01-ollama-bench.sh` | Instala o Ollama (só escuta em `127.0.0.1`), baixa um modelo de embeddings e dois modelos de texto pequenos, e mede velocidade e qualidade nas tarefas do Faro. |
+| `02-swap-e-teste-3b.sh` | Cria 2 GB de swap, limita o Ollama a 1 modelo carregado por vez e repete o teste com o `qwen2.5:3b`. |
 
 ## Secrets necessários
 | Nome | Valor |

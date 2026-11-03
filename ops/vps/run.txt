@@ -1,1 +1,1 @@
-01-ollama-bench.sh
+02-swap-e-teste-3b.sh
