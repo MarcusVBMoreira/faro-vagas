@@ -26,10 +26,6 @@ echo "===== NGINX: site faro-ia ====="
 umask 077
 cat > "$SITE" <<EOF
 # Faro: acesso ao Ollama pela internet, só com token. Gerado por ops/vps/04-ia-https-token.sh
-map \$http_authorization \$faro_ia_ok {
-    default 0;
-    "Bearer $TOKEN" 1;
-}
 limit_req_zone \$binary_remote_addr zone=faro_ia:10m rate=60r/m;
 
 server {
@@ -43,7 +39,7 @@ server {
     }
 
     location / {
-        if (\$faro_ia_ok = 0) { return 401; }
+        if (\$http_authorization != "Bearer $TOKEN") { return 401; }
         limit_req zone=faro_ia burst=20 nodelay;
 
         proxy_pass http://127.0.0.1:11434;
@@ -60,8 +56,9 @@ EOF
 chmod 600 "$SITE"
 ln -sfn "$SITE" /etc/nginx/sites-enabled/faro-ia
 
-if ! nginx -t 2>/dev/null; then
+if ! nginx -t > /root/faro-ops/nginx-test.log 2>&1; then
   echo "ERRO na configuração: desfazendo para não afetar o pdf-api."
+  sed "s/$TOKEN/***/g" /root/faro-ops/nginx-test.log
   rm -f /etc/nginx/sites-enabled/faro-ia
   nginx -t
   exit 1
