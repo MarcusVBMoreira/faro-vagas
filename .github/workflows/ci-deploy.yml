@@ -78,7 +78,7 @@ jobs:
     name: Deploy na Hostinger
     needs: tests
     # Só roda na main e depois que DEPLOY_ENABLED=true for criada em Settings > Variables.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     environment: production
 
