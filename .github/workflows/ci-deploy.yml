@@ -153,7 +153,7 @@ jobs:
           $PHP_BIN artisan queue:restart
 
           # public_html passa a apontar para a pasta public do Laravel
-          cd "$(dirname "$APP_DIR")"
+          cd ~ && cd "$(dirname "$APP_DIR")"
           if [ -d public_html ] && [ ! -L public_html ]; then
             mv public_html "public_html_backup_\$(date +%Y%m%d%H%M%S)"
           fi
