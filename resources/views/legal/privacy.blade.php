@@ -1,13 +1,16 @@
 <x-layouts.app :title="__('Política de privacidade')">
-    <div class="mx-auto max-w-3xl px-6 py-12">
-        <div class="flex items-center justify-between">
+    <header class="sticky top-0 z-30 border-b border-line/60 bg-surface/90 backdrop-blur">
+        <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
             <a href="{{ route('home') }}" aria-label="{{ __('Faro, página inicial') }}">
                 <img src="{{ asset('images/faro-logo.svg') }}" alt="Faro" class="h-8 w-auto">
             </a>
             <x-locale-switcher />
         </div>
+    </header>
 
-        <h1 class="mt-10 font-display text-4xl font-bold tracking-tight">{{ __('Política de privacidade') }}</h1>
+    <div class="mx-auto max-w-3xl px-6 py-12">
+
+        <h1 class="font-display text-4xl font-bold tracking-tight">{{ __('Política de privacidade') }}</h1>
         <p class="mt-2 text-sm text-ink-muted">{{ __('Atualizada em 4 de novembro de 2026') }}</p>
 
         <div class="mt-8 space-y-6 leading-relaxed text-ink">

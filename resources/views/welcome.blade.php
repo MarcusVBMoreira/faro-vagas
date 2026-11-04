@@ -6,6 +6,25 @@
 @endphp
 
 <x-layouts.app>
+    {{-- Menu fixo: fica fora do bloco de destaque para acompanhar a página inteira --}}
+    <header class="sticky top-0 z-30 border-b border-white/5 bg-noite/90 text-white backdrop-blur">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <a href="{{ route('home') }}" class="flex items-center" aria-label="{{ __('Faro, página inicial') }}">
+            <img src="{{ asset('images/faro-logo-dark.svg') }}" alt="Faro" class="h-9 w-auto">
+        </a>
+        <nav class="flex items-center gap-2 text-sm">
+            <a href="#como-funciona" class="hidden rounded-md px-3 py-2 text-white/80 hover:text-white md:inline-block">{{ __('Como funciona') }}</a>
+            <a href="#areas" class="hidden rounded-md px-3 py-2 text-white/80 hover:text-white md:inline-block">{{ __('Áreas') }}</a>
+            <x-locale-switcher dark />
+            @auth
+                <a href="{{ route('profile.show') }}" class="btn btn-primary">{{ __('Meu perfil') }}</a>
+            @else
+                <a href="{{ route('login') }}" class="rounded-md px-3 py-2 text-white/80 hover:text-white">{{ __('Entrar') }}</a>
+                <a href="{{ route('register') }}" class="btn btn-primary">{{ __('Criar conta') }}</a>
+            @endauth
+        </nav>
+      </div>
+    </header>
     @if (session('status'))
         <div class="bg-sinal px-6 py-3 text-center text-sm font-medium text-white" role="status">{{ session('status') }}</div>
     @endif
@@ -19,25 +38,6 @@
             <path d="M51.27 6.77 A41 41 0 0 1 51.27 57.23" fill="none" stroke="#F5A524" stroke-width="2.2" stroke-linecap="round"/>
         </svg>
 
-        {{-- Menu fixo no topo (overflow-clip no pai, e não overflow-hidden, para o sticky funcionar) --}}
-        <header class="sticky top-0 z-30 border-b border-white/5 bg-noite/90 backdrop-blur">
-          <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <a href="{{ route('home') }}" class="flex items-center" aria-label="{{ __('Faro, página inicial') }}">
-                <img src="{{ asset('images/faro-logo-dark.svg') }}" alt="Faro" class="h-9 w-auto">
-            </a>
-            <nav class="flex items-center gap-2 text-sm">
-                <a href="#como-funciona" class="hidden rounded-md px-3 py-2 text-white/80 hover:text-white md:inline-block">{{ __('Como funciona') }}</a>
-                <a href="#areas" class="hidden rounded-md px-3 py-2 text-white/80 hover:text-white md:inline-block">{{ __('Áreas') }}</a>
-                <x-locale-switcher dark />
-                @auth
-                    <a href="{{ route('profile.show') }}" class="btn btn-primary">{{ __('Meu perfil') }}</a>
-                @else
-                    <a href="{{ route('login') }}" class="rounded-md px-3 py-2 text-white/80 hover:text-white">{{ __('Entrar') }}</a>
-                    <a href="{{ route('register') }}" class="btn btn-primary">{{ __('Criar conta') }}</a>
-                @endauth
-            </nav>
-          </div>
-        </header>
 
         <section class="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pb-24 pt-10 md:grid-cols-[1.1fr_1fr] md:pt-16">
             <div>

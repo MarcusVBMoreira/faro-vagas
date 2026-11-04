@@ -19,7 +19,10 @@ class HomePageTest extends TestCase
 
     public function test_top_menu_is_fixed_on_every_layout(): void
     {
-        $this->get('/')->assertSee('sticky top-0', false);
+        // Na home o menu precisa ficar fora do bloco de destaque, senão para de acompanhar a rolagem.
+        $html = $this->get('/')->assertSee('sticky top-0', false)->getContent();
+        $this->assertLessThan(strpos($html, 'overflow-clip'), strpos($html, 'sticky top-0'));
+        $this->get('/privacidade')->assertSee('sticky top-0', false);
         $this->get('/entrar')->assertSee('sticky top-0', false);
         $this->actingAs(\App\Models\User::factory()->create())->get('/perfil')->assertSee('sticky top-0', false);
     }
