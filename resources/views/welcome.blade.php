@@ -11,7 +11,7 @@
     @endif
 
     {{-- Topo + destaque, em azul-noite --}}
-    <div class="relative overflow-hidden bg-noite text-white">
+    <div class="relative overflow-clip bg-noite text-white">
         {{-- Feixes do farol, decorativos --}}
         <svg class="pointer-events-none absolute -right-40 top-1/2 h-[720px] w-[720px] -translate-y-1/2 opacity-[0.07] md:opacity-10" viewBox="0 0 64 64" aria-hidden="true">
             <path d="M32.43 21.53 A17 17 0 0 1 32.43 42.47" fill="none" stroke="#F5A524" stroke-width="2.2" stroke-linecap="round"/>
@@ -19,7 +19,9 @@
             <path d="M51.27 6.77 A41 41 0 0 1 51.27 57.23" fill="none" stroke="#F5A524" stroke-width="2.2" stroke-linecap="round"/>
         </svg>
 
-        <header class="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+        {{-- Menu fixo no topo (overflow-clip no pai, e não overflow-hidden, para o sticky funcionar) --}}
+        <header class="sticky top-0 z-30 border-b border-white/5 bg-noite/90 backdrop-blur">
+          <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <a href="{{ route('home') }}" class="flex items-center" aria-label="{{ __('Faro, página inicial') }}">
                 <img src="{{ asset('images/faro-logo-dark.svg') }}" alt="Faro" class="h-9 w-auto">
             </a>
@@ -34,6 +36,7 @@
                     <a href="{{ route('register') }}" class="btn btn-primary">{{ __('Criar conta') }}</a>
                 @endauth
             </nav>
+          </div>
         </header>
 
         <section class="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pb-24 pt-10 md:grid-cols-[1.1fr_1fr] md:pt-16">
@@ -86,7 +89,7 @@
     </div>
 
     {{-- Como funciona --}}
-    <section id="como-funciona" class="mx-auto max-w-6xl scroll-mt-6 px-6 py-24">
+    <section id="como-funciona" class="mx-auto max-w-6xl scroll-mt-20 px-6 py-24">
         <h2 class="font-display text-3xl font-bold tracking-tight md:text-4xl">{{ __('Como funciona') }}</h2>
         <p class="mt-3 max-w-2xl text-ink-muted">{{ __('Três passos. A IA faz o trabalho pesado, você decide para onde mandar o currículo.') }}</p>
 
@@ -116,7 +119,7 @@
     </section>
 
     {{-- Áreas --}}
-    <section id="areas" class="scroll-mt-6 border-t border-line bg-sunken">
+    <section id="areas" class="scroll-mt-20 border-t border-line bg-sunken">
         <div class="mx-auto max-w-6xl px-6 py-20">
             <h2 class="font-display text-3xl font-bold tracking-tight md:text-4xl">{{ __('Para todas as profissões') }}</h2>
             <p class="mt-3 max-w-2xl text-ink-muted">{{ __('Jovem aprendiz, estágio, operacional, técnico, analista ou gestão. CLT, PJ, temporário ou freelancer. O Faro entende o seu currículo, seja qual for a sua área.') }}</p>

@@ -1,7 +1,7 @@
 @props(['title'])
 
 <x-layouts.app :title="$title">
-    <header class="bg-noite text-white">
+    <header class="sticky top-0 z-30 bg-noite/95 text-white shadow-md shadow-black/10 backdrop-blur">
         <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
             <a href="{{ route('profile.show') }}" aria-label="Faro">
                 <img src="{{ asset('images/faro-logo-dark.svg') }}" alt="Faro" class="h-8 w-auto">

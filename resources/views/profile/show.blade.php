@@ -12,7 +12,7 @@
     $pcdValue = old('pcd', $profile->is_pcd === null ? '' : ($profile->is_pcd ? 'sim' : 'nao'));
 
     $input = 'mt-1.5 block h-11 w-full rounded-md border border-line bg-raised px-3 text-ink focus:border-farol focus:outline-none focus:ring-2 focus:ring-farol/40';
-    $card = 'scroll-mt-6 rounded-lg border border-line bg-raised p-6';
+    $card = 'scroll-mt-20 rounded-lg border border-line bg-raised p-6';
     $chip = 'flex cursor-pointer items-center gap-2 rounded-md border border-line px-3 py-2 text-sm has-[:checked]:border-noite has-[:checked]:bg-sunken';
     $h2 = 'font-display text-xl font-semibold';
     $sections = [
@@ -31,7 +31,7 @@
 <x-layouts.dashboard :title="__('Meu perfil')">
     <div class="grid gap-8 lg:grid-cols-[260px_1fr]">
         {{-- Coluna lateral --}}
-        <aside class="space-y-6 lg:sticky lg:top-6 lg:self-start">
+        <aside class="space-y-6 lg:sticky lg:top-20 lg:self-start">
             <div class="rounded-lg border border-line bg-raised p-5 text-center">
                 <x-avatar :user="$user" size="h-24 w-24 text-3xl" class="mx-auto" />
                 <p class="mt-3 font-display text-lg font-semibold">{{ $user->name }}</p>
