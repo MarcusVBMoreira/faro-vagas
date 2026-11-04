@@ -164,3 +164,7 @@ jobs:
         run: |
           sleep 3
           curl --fail --silent --show-error --max-time 20 "${{ vars.APP_URL }}/up" > /dev/null
+
+      - name: Diagnóstico (banco, IA, e-mail; sem segredos)
+        continue-on-error: true
+        run: ssh hostinger "cd $APP_DIR && $PHP_BIN artisan faro:diagnostico"
