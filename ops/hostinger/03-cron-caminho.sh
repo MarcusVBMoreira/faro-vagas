@@ -10,3 +10,4 @@ echo "--- log do cron (se existir)"
 tail -5 storage/logs/cron.log 2>/dev/null || echo "(sem storage/logs/cron.log)"
 echo "--- diagnóstico"
 php artisan faro:diagnostico 2>&1 | tail -4
+# 2026-11-04T01:17:46
