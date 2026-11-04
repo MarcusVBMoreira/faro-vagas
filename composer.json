@@ -1,14 +1,20 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "marcusvbmoreira/faro-vagas",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Faro: plataforma que usa IA para encontrar vagas de estágio e júnior compatíveis com o currículo.",
+    "keywords": [
+        "laravel",
+        "ai",
+        "ollama",
+        "jobs"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "smalot/pdfparser": "^2.10"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

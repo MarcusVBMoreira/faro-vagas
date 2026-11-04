@@ -1,4 +1,8 @@
 <x-layouts.app>
+    @if (session('status'))
+        <div class="bg-sinal px-6 py-3 text-center text-sm font-medium text-white" role="status">{{ session('status') }}</div>
+    @endif
+
     {{-- Topo + destaque, em azul-noite --}}
     <div class="relative overflow-hidden bg-noite text-white">
         {{-- Feixes do farol, decorativos --}}
@@ -15,7 +19,12 @@
             <nav class="flex items-center gap-2 text-sm">
                 <a href="#como-funciona" class="hidden rounded-md px-3 py-2 text-white/80 hover:text-white sm:inline-block">Como funciona</a>
                 <a href="#status" class="hidden rounded-md px-3 py-2 text-white/80 hover:text-white sm:inline-block">Status</a>
-                <a href="{{ config('faro.repo_url') }}" class="btn btn-ghost-dark" target="_blank" rel="noopener">GitHub</a>
+                @auth
+                    <a href="{{ route('profile.show') }}" class="btn btn-primary">Meu perfil</a>
+                @else
+                    <a href="{{ route('login') }}" class="rounded-md px-3 py-2 text-white/80 hover:text-white">Entrar</a>
+                    <a href="{{ route('register') }}" class="btn btn-primary">Criar conta</a>
+                @endauth
             </nav>
         </header>
 
@@ -23,7 +32,7 @@
             <div>
                 <p class="mb-5 inline-flex items-center gap-2 rounded-full border border-noite-line px-3 py-1 text-xs font-medium text-white/80">
                     <span class="h-1.5 w-1.5 rounded-full bg-farol"></span>
-                    Em construção · vagas de estágio e júnior em tecnologia
+                    Beta · vagas de estágio e júnior em tecnologia
                 </p>
                 <h1 class="font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
                     Pare de procurar vaga.<br>
@@ -33,8 +42,8 @@
                     A IA que encontra as vagas certas para você. Envie seu currículo e veja as vagas mais compatíveis com o seu perfil, cada uma com uma nota e o motivo.
                 </p>
                 <div class="mt-8 flex flex-wrap gap-3">
-                    <a href="#como-funciona" class="btn btn-primary h-12 px-6 text-base">Ver como funciona</a>
-                    <a href="{{ config('faro.repo_url') }}" class="btn btn-ghost-dark h-12 px-6 text-base" target="_blank" rel="noopener">Acompanhar o projeto</a>
+                    <a href="{{ auth()->check() ? route('profile.show') : route('register') }}" class="btn btn-primary h-12 px-6 text-base">Enviar meu currículo</a>
+                    <a href="#como-funciona" class="btn btn-ghost-dark h-12 px-6 text-base">Ver como funciona</a>
                 </div>
             </div>
 
@@ -109,8 +118,9 @@
             </div>
             <ul class="space-y-3 text-sm">
                 <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-success"></span> Identidade visual, banco de dados e deploy automático</li>
-                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-farol"></span> Semana 1: contas, upload de currículo e perfil com IA</li>
-                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-line"></span> Semana 2: coleta automática de vagas</li>
+                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-success"></span> IA própria no servidor do projeto (sem enviar currículos a terceiros)</li>
+                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-success"></span> Semana 1: contas, upload de currículo e perfil com IA</li>
+                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-farol"></span> Semana 2: coleta automática de vagas</li>
                 <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-line"></span> Semana 3: match com IA</li>
                 <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-line"></span> Semana 4: Kanban, e-mail diário e acabamento</li>
             </ul>
@@ -120,7 +130,11 @@
     <footer class="bg-noite text-white/70">
         <div class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-6 py-10 text-sm sm:flex-row sm:items-center">
             <img src="{{ asset('images/faro-logo-dark.svg') }}" alt="Faro" class="h-7 w-auto">
-            <p>Projeto de portfólio de Marcus Moreira · {{ now()->year }}</p>
+            <p>
+                Projeto de portfólio de Marcus Moreira · {{ now()->year }} ·
+                <a href="{{ route('privacy') }}" class="underline hover:text-white">Privacidade</a> ·
+                <a href="{{ config('faro.repo_url') }}" class="underline hover:text-white" target="_blank" rel="noopener">GitHub</a>
+            </p>
         </div>
     </footer>
 </x-layouts.app>

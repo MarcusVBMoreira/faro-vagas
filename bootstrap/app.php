@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Visitante tentando abrir página logada vai para o login;
+        // usuário logado tentando abrir login/cadastro vai para o perfil.
+        $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->redirectUsersTo(fn () => route('profile.show'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

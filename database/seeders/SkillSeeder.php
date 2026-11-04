@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Skill;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 /**
  * Catálogo inicial de habilidades. A IA também cria novas conforme lê currículos e vagas.
@@ -24,7 +23,7 @@ class SkillSeeder extends Seeder
         foreach ($skills as $category => $names) {
             foreach ($names as $name) {
                 Skill::updateOrCreate(
-                    ['slug' => Str::slug($name)],
+                    ['slug' => Skill::slugFor($name)],
                     ['name' => $name, 'category' => $category],
                 );
             }

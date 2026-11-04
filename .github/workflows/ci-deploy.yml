@@ -4,7 +4,7 @@ name: CI e Deploy
 
 on:
   push:
-    branches: [main]
+    branches: ['**']   # testes em qualquer branch; o deploy só roda na main (ver job deploy)
   pull_request:
   workflow_dispatch:
 
