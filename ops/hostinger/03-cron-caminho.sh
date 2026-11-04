@@ -12,3 +12,4 @@ echo "--- diagnóstico"
 php artisan faro:diagnostico 2>&1 | tail -4
 # 2026-11-04T01:17:46
 # 2026-11-04T01:25:49
+# 2026-11-04T01:30:37
