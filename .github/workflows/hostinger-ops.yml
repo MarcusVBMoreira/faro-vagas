@@ -1,0 +1,49 @@
+# Roda scripts de ops/hostinger/ na hospedagem por SSH (mesma chave do deploy).
+name: Operações na Hostinger
+
+on:
+  push:
+    branches: [main]
+    paths: ['ops/hostinger/**']
+  workflow_dispatch:
+    inputs:
+      script:
+        description: 'Script de ops/hostinger/ (ex.: 01-diagnostico-cron.sh)'
+        required: true
+        default: '01-diagnostico-cron.sh'
+
+concurrency:
+  group: hostinger-ops
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Rodar script na Hostinger
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Escolher script
+        id: pick
+        run: |
+          SCRIPT="${{ github.event.inputs.script }}"
+          if [ -z "$SCRIPT" ]; then SCRIPT="$(tr -d '[:space:]' < ops/hostinger/run.txt)"; fi
+          case "$SCRIPT" in
+            *[!A-Za-z0-9._-]*|'') echo "Nome de script inválido: '$SCRIPT'"; exit 1;;
+          esac
+          test -f "ops/hostinger/$SCRIPT" || { echo "ops/hostinger/$SCRIPT não existe"; exit 1; }
+          echo "script=$SCRIPT" >> "$GITHUB_OUTPUT"
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/host_key
+          chmod 600 ~/.ssh/host_key
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Rodar ${{ steps.pick.outputs.script }}
+        run: |
+          SCRIPT="${{ steps.pick.outputs.script }}"
+          ssh -i ~/.ssh/host_key -p "${{ secrets.SSH_PORT }}" -o ServerAliveInterval=30 \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" 'bash -s' < "ops/hostinger/$SCRIPT"
