@@ -178,6 +178,13 @@
                             <input type="checkbox" name="open_to_work" value="1" class="h-4 w-4 accent-noite" @checked(old('open_to_work', $profile->open_to_work))>
                             {{ __('Estou aberto a oportunidades') }}
                         </label>
+                        <label class="flex items-start gap-3 rounded-md border border-line px-3 py-2.5 text-sm sm:col-span-2">
+                            <input type="checkbox" name="accepts_international" value="1" class="mt-0.5 h-4 w-4 accent-noite" @checked(old('accepts_international', $profile->accepts_international))>
+                            <span>
+                                <span class="block font-medium">{{ __('Aceito vagas remotas de empresas de outros países') }}</span>
+                                <span class="block text-xs text-ink-muted">{{ __('Só entram vagas que aceitam pessoas no Brasil. Normalmente pedem inglês.') }}</span>
+                            </span>
+                        </label>
                     </div>
 
                     <fieldset class="mt-6">

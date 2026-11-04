@@ -11,7 +11,10 @@
                    class="hidden rounded-md px-3 py-2 sm:inline-block {{ request()->routeIs('profile.*') ? 'bg-noite-2 text-white' : 'text-white/75 hover:text-white' }}">
                     {{ __('Meu perfil') }}
                 </a>
-                <span class="hidden px-3 py-2 text-white/40 md:inline" title="{{ __('Em breve') }}">{{ __('Vagas para você') }}</span>
+                <a href="{{ route('jobs.index') }}"
+                   class="rounded-md px-3 py-2 {{ request()->routeIs('jobs.*') ? 'bg-noite-2 text-white' : 'text-white/75 hover:text-white' }}">
+                    {{ __('Vagas') }}
+                </a>
                 <x-locale-switcher dark />
                 <details class="relative">
                     <summary class="flex cursor-pointer list-none items-center gap-2 rounded-md p-1 hover:bg-noite-2" aria-label="{{ __('Menu da conta') }}">

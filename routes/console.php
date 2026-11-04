@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schedule;
  * (ver docs/DEPLOY.md), e é ele que processa a fila: não há worker rodando o tempo todo
  * na hospedagem compartilhada.
  */
-Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=2 --timeout=600')
+Schedule::command('queue:work --queue=default,jobs --stop-when-empty --max-time=50 --tries=2 --timeout=600')
     ->everyMinute()
     ->withoutOverlapping(15)
     ->name('fila');
@@ -19,6 +19,9 @@ Schedule::call(fn () => \Illuminate\Support\Facades\Cache::forever('cron:heartbe
     ->name('heartbeat');
 
 Schedule::command('queue:prune-failed --hours=168')->daily();
+
+// Coleta de vagas: 1x por dia, de madrugada (a IA estrutura as novas ao longo da manhã)
+Schedule::command('faro:fetch-jobs')->dailyAt('05:40')->withoutOverlapping(120);
 Schedule::command('auth:clear-resets')->daily();
 
 /*
@@ -82,3 +85,39 @@ Artisan::command('faro:diagnostico', function () {
     $this->line('Fila (jobs pendentes) ...... '.\Illuminate\Support\Facades\DB::table('jobs')->count());
     $this->line('Fila (jobs com falha) ...... '.\Illuminate\Support\Facades\DB::table('failed_jobs')->count());
 })->purpose('Confere banco, IA e e-mail sem mostrar segredos');
+
+/*
+ * Coleta vagas de todas as fontes ativas (ou só das indicadas em --source).
+ * Fontes sem chave configurada (Adzuna, Jooble) são puladas com aviso.
+ */
+Artisan::command('faro:fetch-jobs {--source=* : slug da fonte (ex.: adzuna-br)}', function () {
+    $collector = app(\App\Services\Jobs\JobCollector::class);
+    $connectors = app(\App\Services\Jobs\JobConnectors::class);
+
+    $sources = \App\Models\JobSource::where('is_active', true)
+        ->where('type', '!=', \App\Enums\JobSourceType::Manual->value)
+        ->when($this->option('source'), fn ($q, $slugs) => $q->whereIn('slug', $slugs))
+        ->orderBy('id')->get();
+
+    foreach ($sources as $source) {
+        $connector = $connectors->for($source->type);
+        if (! $connector?->isConfigured()) {
+            $this->line(str_pad($source->slug, 18, '.').' <comment>pulada (sem chave/conector)</comment>');
+
+            continue;
+        }
+
+        try {
+            $s = $collector->collect($source);
+            $this->line(str_pad($source->slug, 18, '.')." lidas {$s['fetched']} · novas {$s['created']} · renovadas {$s['updated']}"
+                ." · fora da região {$s['outside_region']} · repetidas {$s['duplicated']} · fechadas {$s['closed']}");
+        } catch (\Throwable $e) {
+            report($e);
+            // Mensagem curta, sem URL (a URL do Jooble contém a chave)
+            $this->line(str_pad($source->slug, 18, '.').' <error>falhou</error> '.class_basename($e).' '.preg_replace('#https?://\S+#', '[url]', mb_substr($e->getMessage(), 0, 160)));
+        }
+    }
+
+    $this->line('Vagas ativas: '.\App\Models\JobPosting::active()->count()
+        .' · aguardando IA: '.\App\Models\JobPosting::active()->whereNull('extracted_at')->count());
+})->purpose('Coleta vagas das fontes (Grande SP + remotas)');

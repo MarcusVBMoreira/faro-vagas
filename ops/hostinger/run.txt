@@ -1,1 +1,1 @@
-06-sondar-gupy.sh
+05-email-config.sh

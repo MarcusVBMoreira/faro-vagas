@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\AvatarController;
+use App\Http\Controllers\JobPostingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileItemController;
@@ -57,6 +58,12 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/perfil/curriculo', [ResumeController::class, 'store'])->middleware('throttle:10,1')->name('resume.store');
         Route::get('/perfil/curriculo/status', [ResumeController::class, 'status'])->name('resume.status');
+
+        Route::get('/vagas', [JobPostingController::class, 'index'])->name('jobs.index');
+        Route::get('/vagas/nova', [JobPostingController::class, 'create'])->name('jobs.create');
+        Route::post('/vagas', [JobPostingController::class, 'store'])->middleware('throttle:10,1')->name('jobs.store');
+        Route::get('/vagas/{job}', [JobPostingController::class, 'show'])->whereNumber('job')->name('jobs.show');
+        Route::delete('/vagas/{job}', [JobPostingController::class, 'destroy'])->whereNumber('job')->name('jobs.destroy');
 
         Route::put('/conta/seguranca', [AccountController::class, 'updateSecurity'])->name('account.security');
         Route::delete('/conta', [AccountController::class, 'destroy'])->name('account.destroy');

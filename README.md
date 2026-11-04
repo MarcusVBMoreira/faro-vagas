@@ -32,7 +32,8 @@ The site is available in **Portuguese, English and Spanish** (it targets the Bra
 - [x] Optional profile photo (cropped to 400×400 JPEG, EXIF/GPS stripped) and a profile completeness meter
 - [x] Optional, consent-based disability (PcD) field for affirmative openings, never used in scoring
 - [x] Account deletion that wipes all user data and files (LGPD, Brazil's GDPR)
-- [ ] Daily job collection from public sources *(week 2)*
+- [x] Daily job collection for Greater São Paulo + remote jobs, every field (Adzuna, Jooble, Remotive, GitHub), with search and filters
+- [x] Add a job by hand; international remote jobs that accept people in Brazil (opt-in)
 - [ ] Job matching with embeddings + score *(week 3)*
 - [ ] Application Kanban board and daily email digest *(week 4)*
 

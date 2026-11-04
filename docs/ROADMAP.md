@@ -38,12 +38,20 @@ Feedback after the first real test: the product looked like a tech-only job boar
 - [x] **Portuguese, English and Spanish**: language switcher, browser detection, saved per account; emails go out in the user's language
 - [x] Security settings: change password, toggle 2FA
 
-## Week 2 · Job collection
-- [ ] `JobSourceConnector` interface and the first connectors, **covering every field** (not only GitHub tech boards)
-- [ ] `faro:fetch-jobs` command scheduled once a day
-- [ ] The AI structures each posting (field, level, contract, work mode, city, requirements) in the queue
-- [ ] Jobs page with search and filters
-- [ ] Add a job manually (paste a link or text)
+## Week 2 · Job collection (in progress)
+Scope decision: **Greater São Paulo (39 cities) + remote jobs**, every field. `FARO_JOBS_REGION=brasil` opens it to the whole country.
+- [x] `JobSourceConnector` interface with connectors, all through official or public APIs:
+  - **Adzuna Brasil** (aggregator of Brazilian job sites, every field, free key)
+  - **Jooble Brasil** (aggregator, free key on request)
+  - **Remotive** (international remote jobs, kept only when open to Brazil: Worldwide, LATAM, Americas)
+  - **GitHub issues** (tech community boards)
+  - The unofficial Gupy portal search was evaluated and dropped: it no longer answers server requests.
+- [x] `faro:fetch-jobs` scheduled daily at 05:40: region filter, de-duplication (same source id, same URL, or same title + company + city across aggregators), stale jobs closed after 5 days unseen or 45 days old
+- [x] Fast deterministic classification (contract, work model, level, field, disability-inclusive) and an AI pass in a low-priority queue for field, level, minimum education and required/nice-to-have skills, grounded in the posting text
+- [x] Jobs page with search and filters (field, level, work model, contract, disability-inclusive, international) and a detail page with source credit
+- [x] Add a job by hand (private to the user who added it)
+- [x] "I accept remote jobs from other countries" profile preference
+- [ ] Adzuna and Jooble keys in production
 - **Deliverable:** the database fills itself with job postings.
 
 ## Week 3 · AI matching

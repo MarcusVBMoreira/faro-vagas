@@ -170,7 +170,7 @@ erDiagram
 | `profile_skill` | Skills of each profile, with a 1–5 level and the source (`ai` or `manual`). |
 | `resumes` | Uploaded résumés and the text extracted from the PDF. Only one is `is_current`. |
 | `job_sources` | Job sources. Each `type` gets its own connector. |
-| `job_postings` | Collected postings. It isn't called `jobs` because that table is Laravel's queue. |
+| `job_postings` | Collected postings (and private ones a user added by hand, with `user_id`). Field, level, minimum education, contract, work model, city, disability-inclusive and international flags, and `last_seen_at` to close jobs that disappear from the source. It isn't called `jobs` because that table is Laravel's queue. |
 | `job_posting_skill` | Skills of each posting, split into required and nice-to-have. |
 | `job_matches` | Result of the match funnel: similarity (embeddings) plus score, strengths and gaps. |
 | `applications` | Applications on the Kanban board, with their position inside each column. |

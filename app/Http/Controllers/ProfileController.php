@@ -87,6 +87,7 @@ class ProfileController extends Controller
             'languages' => $languages,
             'english_level' => collect($languages)->firstWhere('language', 'ingles')['level'] ?? null,
             'open_to_work' => $request->boolean('open_to_work'),
+            'accepts_international' => $request->boolean('accepts_international'),
             'willing_to_relocate' => $request->boolean('willing_to_relocate'),
             'willing_to_travel' => $request->boolean('willing_to_travel'),
             'digest_enabled' => $request->boolean('digest_enabled'),

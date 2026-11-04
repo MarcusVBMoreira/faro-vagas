@@ -107,6 +107,12 @@ AI_API_KEY=SAME_VALUE_AS_THE_FARO_IA_TOKEN_SECRET
 AI_MODEL=qwen2.5:3b
 AI_EMBEDDING_MODEL=bge-m3
 AI_DAILY_LIMIT_PER_USER=50
+
+# Job sources (week 2). Without a key, the source is skipped.
+ADZUNA_APP_ID=
+ADZUNA_APP_KEY=
+JOOBLE_API_KEY=
+FARO_JOBS_REGION=grande_sp
 ```
 
 - Passwords containing `$`, `#` or spaces go in **single quotes**.

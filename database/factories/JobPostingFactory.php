@@ -15,7 +15,11 @@ class JobPostingFactory extends Factory
     public function definition(): array
     {
         $url = fake()->unique()->url();
-        $title = fake()->randomElement(['Estágio em Desenvolvimento PHP', 'Desenvolvedor(a) Front-end Júnior', 'Estágio em Dados']);
+        [$title, $area] = fake()->randomElement([
+            ['Auxiliar Administrativo', 'administracao'], ['Vendedor(a) de Loja', 'varejo'],
+            ['Técnico(a) de Enfermagem', 'saude'], ['Estágio em Desenvolvimento PHP', 'tecnologia'],
+            ['Auxiliar de Logística', 'logistica'], ['Analista Financeiro Júnior', 'contabilidade'],
+        ]);
         $company = fake()->company();
 
         return [
@@ -24,10 +28,12 @@ class JobPostingFactory extends Factory
             'company' => $company,
             'description' => fake()->paragraphs(3, true),
             'level' => fake()->randomElement(JobLevel::cases()),
+            'area' => $area,
             'modality' => fake()->randomElement(WorkModality::cases()),
             'city' => 'São Paulo',
             'state' => 'SP',
-            'contract_type' => 'estagio',
+            'contract_type' => fake()->randomElement(['clt', 'estagio', 'pj']),
+            'last_seen_at' => now(),
             'published_at' => now()->subDays(fake()->numberBetween(0, 20)),
             'status' => 'active',
             'content_hash' => JobPosting::makeHash($url, $title, $company),

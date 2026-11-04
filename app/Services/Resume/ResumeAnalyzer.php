@@ -9,6 +9,7 @@ use App\Enums\JobLevel;
 use App\Models\User;
 use App\Support\Areas;
 use App\Services\SkillCatalog;
+use App\Support\Grounding;
 use App\Support\ProfileNormalizer;
 use Illuminate\Support\Str;
 
@@ -44,48 +45,25 @@ class ResumeAnalyzer
      */
     public static function groundInResume(array $data, string $resumeText): array
     {
-        $resume = ' '.self::plain($resumeText).' ';
+        $resume = Grounding::plain($resumeText);
 
-        if (filled($data['desired_role'] ?? null) && ! self::isGrounded($data['desired_role'], $resume)) {
+        if (filled($data['desired_role'] ?? null) && ! Grounding::isGrounded($data['desired_role'], $resume)) {
             $data['desired_role'] = null;
         }
 
-        if (filled($data['headline'] ?? null) && ! self::isGrounded($data['headline'], $resume)) {
+        if (filled($data['headline'] ?? null) && ! Grounding::isGrounded($data['headline'], $resume)) {
             $data['headline'] = $data['desired_role'] ?? null;
         }
 
         $data['skills'] = array_values(array_filter(
             $data['skills'] ?? [],
-            fn (string $skill) => self::isGrounded($skill, $resume, 0.34)
-                || self::isGrounded(app(SkillCatalog::class)->canonical($skill), $resume, 0.34), // "js" → JavaScript
+            fn (string $skill) => Grounding::isGrounded($skill, $resume, 0.34)
+                || Grounding::isGrounded(app(SkillCatalog::class)->canonical($skill), $resume, 0.34), // "js" → JavaScript
         ));
 
         return $data;
     }
 
-    /** Pelo menos $ratio das palavras relevantes (3+ letras, sem "de", "com"...) aparecem no currículo. */
-    private static function isGrounded(string $phrase, string $plainResume, float $ratio = 0.5): bool
-    {
-        $stop = ['com', 'para', 'por', 'dos', 'das', 'nos', 'nas', 'uma', 'que', 'and', 'the', 'with', 'em', 'de', 'do', 'da', 'e', 'ou'];
-        $words = array_filter(
-            preg_split('/[^a-z0-9#+]+/', self::plain($phrase)) ?: [],
-            fn ($w) => mb_strlen($w) >= 2 && ! in_array($w, $stop, true),
-        );
-
-        if ($words === []) {
-            return true;
-        }
-
-        // Prefixo de 5 letras tolera plural e flexão ("vendas" x "vendedor" não, mas "faturamento" x "faturar" sim)
-        $found = array_filter($words, fn ($w) => str_contains($plainResume, mb_strlen($w) > 5 ? mb_substr($w, 0, 5) : $w));
-
-        return count($found) / count($words) >= $ratio;
-    }
-
-    private static function plain(string $text): string
-    {
-        return Str::lower(Str::ascii($text));
-    }
 
     private function prompt(string $text): string
     {

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ContractType;
+use App\Enums\EducationLevel;
 use App\Enums\JobLevel;
 use App\Enums\WorkModality;
 use Database\Factories\JobPostingFactory;
@@ -18,9 +20,10 @@ class JobPosting extends Model
     use HasFactory;
 
     protected $fillable = [
-        'job_source_id', 'external_id', 'url', 'title', 'company', 'description', 'level', 'modality',
-        'city', 'state', 'contract_type', 'salary_min', 'salary_max', 'published_at', 'expires_at',
-        'status', 'ai_summary', 'extracted_at', 'content_hash',
+        'job_source_id', 'user_id', 'external_id', 'url', 'title', 'company', 'description', 'level', 'area',
+        'education_level', 'modality', 'city', 'state', 'location_text', 'contract_type', 'is_pcd', 'is_international',
+        'salary_min', 'salary_max', 'published_at', 'expires_at', 'status', 'ai_summary', 'extracted_at',
+        'content_hash', 'source_category', 'last_seen_at',
     ];
 
     protected $hidden = ['embedding'];
@@ -29,7 +32,11 @@ class JobPosting extends Model
     {
         return [
             'level' => JobLevel::class,
+            'education_level' => EducationLevel::class,
             'modality' => WorkModality::class,
+            'is_pcd' => 'boolean',
+            'is_international' => 'boolean',
+            'last_seen_at' => 'datetime',
             'published_at' => 'datetime',
             'expires_at' => 'datetime',
             'extracted_at' => 'datetime',
@@ -48,6 +55,31 @@ class JobPosting extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
+    }
+
+    /** Vagas públicas (coletadas) + as que a própria pessoa adicionou. */
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        return $query->where(fn ($q) => $q->whereNull('user_id')->when($user, fn ($q) => $q->orWhere('user_id', $user->id)));
+    }
+
+    public function contractLabel(): ?string
+    {
+        return ContractType::tryFrom((string) $this->contract_type)?->label();
+    }
+
+    public function locationLabel(): ?string
+    {
+        if ($this->city || $this->state) {
+            return collect([$this->city, $this->state])->filter()->implode(', ');
+        }
+
+        return $this->location_text;
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function source(): BelongsTo

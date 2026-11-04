@@ -18,7 +18,7 @@ class Profile extends Model
 
     protected $fillable = [
         'headline', 'summary', 'desired_role', 'desired_level', 'area',
-        'desired_modalities', 'desired_contracts', 'salary_expectation', 'availability', 'open_to_work',
+        'desired_modalities', 'desired_contracts', 'salary_expectation', 'availability', 'open_to_work', 'accepts_international',
         'city', 'state', 'phone', 'linkedin_url', 'portfolio_url',
         'willing_to_relocate', 'willing_to_travel', 'driver_license',
         'education_level', 'current_semester', 'graduation_year',
@@ -38,6 +38,7 @@ class Profile extends Model
             'driver_license' => 'array',
             'digest_enabled' => 'boolean',
             'open_to_work' => 'boolean',
+            'accepts_international' => 'boolean',
             'willing_to_relocate' => 'boolean',
             'willing_to_travel' => 'boolean',
             'is_pcd' => 'boolean',
