@@ -135,4 +135,12 @@ class ProfileNormalizerTest extends TestCase
         $this->assertNull(ProfileNormalizer::monthDate('13/2020'));
         $this->assertNull(ProfileNormalizer::monthDate('atual'));
     }
+
+    public function test_desired_role_keeps_only_the_first_option(): void
+    {
+        $this->assertSame('Estágio em Desenvolvimento de Software', ProfileNormalizer::role('Estágio em Desenvolvimento de Software, Desenvolvimento Web ou TI'));
+        $this->assertSame('Vendedor', ProfileNormalizer::role('Vendedor / Repositor'));
+        $this->assertSame('Auxiliar de logística', ProfileNormalizer::role('  Auxiliar de logística '));
+        $this->assertNull(ProfileNormalizer::role(''));
+    }
 }

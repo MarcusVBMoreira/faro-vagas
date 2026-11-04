@@ -157,7 +157,7 @@ class ResumeTest extends TestCase
 
     public function test_manual_skills_survive_a_new_analysis(): void
     {
-        $this->fakeExtractor();
+        $this->fakeExtractor(self::RESUME_TEXT."\nPython");
         $this->fakeAi($this->aiAnswer(['habilidades' => ['Python']]));
         $user = User::factory()->create();
         $profile = Profile::factory()->for($user)->create();
@@ -226,7 +226,7 @@ class ResumeTest extends TestCase
 
     public function test_analysis_of_a_non_tech_resume_fills_experiences_and_education(): void
     {
-        $this->fakeExtractor("Maria Lima - Diadema/SP\nAuxiliar de logística\nEmpilhadeira, NR-11, controle de estoque");
+        $this->fakeExtractor("Maria Lima - Diadema/SP\nObjetivo: Conferente\nAuxiliar de logística\nEmpilhadeira, NR-11, controle de estoque");
         $this->fakeAi($this->aiAnswer([
             'titulo' => 'Auxiliar de logística com experiência em estoque',
             'cargo_desejado' => 'Conferente',
@@ -283,6 +283,42 @@ class ResumeTest extends TestCase
         $education = $profile->educations()->first();
         $this->assertSame('concluido', $education->status);
         $this->assertSame(2015, $education->end_year);
+    }
+
+    public function test_text_copied_from_the_prompt_is_discarded(): void
+    {
+        // Caso real: o modelo devolveu o exemplo do prompt como título de um currículo de TI.
+        $this->fakeExtractor("Marcus Moreira - Mauá/SP\nObjetivo: Estágio em Desenvolvimento de Software\nEngenharia de Software (cursando)\nPHP, Laravel, MySQL");
+        $this->fakeAi($this->aiAnswer([
+            'titulo' => 'Assistente administrativo com experiência em faturamento',
+            'cargo_desejado' => 'Estágio em Desenvolvimento de Software, Desenvolvimento Web ou Tecnologia da Informação',
+            'habilidades' => ['PHP', 'Laravel', 'Excel', 'Empilhadeira', 'NR-35'],
+        ]));
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post('/perfil/curriculo', [
+            'resume' => UploadedFile::fake()->create('cv.pdf', 100, 'application/pdf'),
+        ]);
+
+        $profile = $user->fresh()->profile;
+        $this->assertSame('Estágio em Desenvolvimento de Software', $profile->desired_role);
+        $this->assertSame('Estágio em Desenvolvimento de Software', $profile->headline);
+        $this->assertEqualsCanonicalizing(['PHP', 'Laravel'], $profile->skills->pluck('name')->all());
+    }
+
+    public function test_grounding_keeps_what_the_resume_supports(): void
+    {
+        $text = "Vendedora com 5 anos em lojas de varejo. Atendimento ao cliente, caixa, Excel e JS básico.";
+
+        $data = \App\Services\Resume\ResumeAnalyzer::groundInResume([
+            'headline' => 'Vendedora de varejo com foco em atendimento',
+            'desired_role' => 'Vendedora',
+            'skills' => ['Atendimento ao cliente', 'Operação de caixa', 'Excel', 'js', 'SAP'],
+        ], $text);
+
+        $this->assertSame('Vendedora de varejo com foco em atendimento', $data['headline']);
+        $this->assertSame('Vendedora', $data['desired_role']);
+        $this->assertSame(['Atendimento ao cliente', 'Operação de caixa', 'Excel', 'js'], $data['skills']);
     }
 
     public function test_status_endpoint(): void

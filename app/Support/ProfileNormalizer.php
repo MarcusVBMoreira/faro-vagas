@@ -70,7 +70,7 @@ final class ProfileNormalizer
         return [
             'headline' => self::text($raw['titulo'] ?? null, 160),
             'summary' => self::text($raw['resumo'] ?? null, 1000),
-            'desired_role' => self::text($raw['cargo_desejado'] ?? null, 120),
+            'desired_role' => self::role($raw['cargo_desejado'] ?? null),
             'area' => self::area($raw['area'] ?? null),
             'desired_level' => self::level($raw['nivel_desejado'] ?? null),
             'desired_contracts' => self::contracts($raw['contratos'] ?? []),
@@ -89,6 +89,18 @@ final class ProfileNormalizer
             'experiences' => self::experiences($raw['experiencias'] ?? []),
             'educations' => self::educations($raw['formacoes'] ?? []),
         ];
+    }
+
+    /** "Estágio em Desenvolvimento de Software, Desenvolvimento Web ou TI" → "Estágio em Desenvolvimento de Software". */
+    public static function role(mixed $value): ?string
+    {
+        $text = self::text($value, 300);
+        if ($text === null) {
+            return null;
+        }
+        $first = trim(preg_split('/\s*(?:,|;|\/|\|| ou | or )\s*/iu', $text)[0] ?? '');
+
+        return self::text($first !== '' ? $first : $text, 120);
     }
 
     public static function level(mixed $value): ?JobLevel

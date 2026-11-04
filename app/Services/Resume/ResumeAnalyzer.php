@@ -8,6 +8,7 @@ use App\Enums\EducationLevel;
 use App\Enums\JobLevel;
 use App\Models\User;
 use App\Support\Areas;
+use App\Services\SkillCatalog;
 use App\Support\ProfileNormalizer;
 use Illuminate\Support\Str;
 
@@ -29,7 +30,61 @@ class ResumeAnalyzer
 
         $raw = $this->ai->generateJson($this->prompt($text), self::schema(), 'parse_resume', $user);
 
-        return ProfileNormalizer::normalize($raw);
+        return self::groundInResume(ProfileNormalizer::normalize($raw), $resumeText);
+    }
+
+    /**
+     * Modelos pequenos às vezes copiam exemplos do prompt em vez de ler o currículo
+     * (aconteceu com o título: "Assistente administrativo com experiência em faturamento"
+     * num currículo de Engenharia de Software). Aqui o texto livre só fica se for
+     * sustentado pelo próprio currículo; senão o título é montado a partir do cargo desejado.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function groundInResume(array $data, string $resumeText): array
+    {
+        $resume = ' '.self::plain($resumeText).' ';
+
+        if (filled($data['desired_role'] ?? null) && ! self::isGrounded($data['desired_role'], $resume)) {
+            $data['desired_role'] = null;
+        }
+
+        if (filled($data['headline'] ?? null) && ! self::isGrounded($data['headline'], $resume)) {
+            $data['headline'] = $data['desired_role'] ?? null;
+        }
+
+        $data['skills'] = array_values(array_filter(
+            $data['skills'] ?? [],
+            fn (string $skill) => self::isGrounded($skill, $resume, 0.34)
+                || self::isGrounded(app(SkillCatalog::class)->canonical($skill), $resume, 0.34), // "js" → JavaScript
+        ));
+
+        return $data;
+    }
+
+    /** Pelo menos $ratio das palavras relevantes (3+ letras, sem "de", "com"...) aparecem no currículo. */
+    private static function isGrounded(string $phrase, string $plainResume, float $ratio = 0.5): bool
+    {
+        $stop = ['com', 'para', 'por', 'dos', 'das', 'nos', 'nas', 'uma', 'que', 'and', 'the', 'with', 'em', 'de', 'do', 'da', 'e', 'ou'];
+        $words = array_filter(
+            preg_split('/[^a-z0-9#+]+/', self::plain($phrase)) ?: [],
+            fn ($w) => mb_strlen($w) >= 2 && ! in_array($w, $stop, true),
+        );
+
+        if ($words === []) {
+            return true;
+        }
+
+        // Prefixo de 5 letras tolera plural e flexão ("vendas" x "vendedor" não, mas "faturamento" x "faturar" sim)
+        $found = array_filter($words, fn ($w) => str_contains($plainResume, mb_strlen($w) > 5 ? mb_substr($w, 0, 5) : $w));
+
+        return count($found) / count($words) >= $ratio;
+    }
+
+    private static function plain(string $text): string
+    {
+        return Str::lower(Str::ascii($text));
     }
 
     private function prompt(string $text): string
@@ -46,7 +101,7 @@ class ResumeAnalyzer
 
         Regras:
         - Use só o que está escrito no currículo. Não invente. Se não houver a informação, use "" ou [].
-        - cargo_desejado: o cargo que a pessoa busca (objetivo) ou, se não houver, o último cargo.
+        - cargo_desejado: UM cargo curto (até 6 palavras) que a pessoa busca (objetivo) ou, se não houver, o último cargo.
         - area: uma destas chaves: {$areas}.
         - nivel_desejado: uma destas chaves: {$levels}. Estudante buscando estágio = "estagio".
         - escolaridade: maior nível de formação, uma destas chaves: {$education}.
@@ -58,11 +113,12 @@ class ResumeAnalyzer
           inicio e fim no formato "AAAA-MM"; atual = true se a pessoa ainda trabalha lá.
         - formacoes: cursos (superior, técnico, ensino médio, pós), com status cursando, concluido ou trancado.
           inicio e fim são anos (número) ou 0.
-        - habilidades: competências e ferramentas citadas (ex.: Excel, atendimento ao cliente, empilhadeira, NR-35, vendas, PHP).
+        - habilidades: só competências e ferramentas que aparecem escritas no currículo.
         - cnh: categorias da carteira de motorista, como ["B"]. Lista vazia se não citar.
         - cidade: só o nome da cidade; estado: sigla com 2 letras.
-        - titulo: até 12 palavras, como "Assistente administrativo com experiência em faturamento".
-        - resumo: 1 ou 2 frases sobre o perfil profissional, em português.
+        - titulo: até 12 palavras resumindo QUEM É ESTA PESSOA, com o cargo ou a formação dela
+          e o principal ponto forte, usando palavras do próprio currículo.
+        - resumo: 1 ou 2 frases sobre o perfil profissional desta pessoa, em português.
 
         CURRÍCULO:
         {$text}
