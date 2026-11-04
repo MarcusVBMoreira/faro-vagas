@@ -1,1 +1,1 @@
-01-diagnostico-cron.sh
+02-status-analises.sh
