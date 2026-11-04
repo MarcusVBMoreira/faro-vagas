@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * Completa uma vaga com a IA (fila "jobs", de prioridade menor que a análise de currículos).
  * O que a classificação rápida já descobriu não é sobrescrito.
+ * (A propriedade se chama $posting porque $job já existe no trait Queueable.)
  */
 class StructureJobPosting implements ShouldQueue
 {
@@ -24,13 +25,13 @@ class StructureJobPosting implements ShouldQueue
 
     public int $backoff = 120;
 
-    public function __construct(public JobPosting $job)
+    public function __construct(public JobPosting $posting)
     {
     }
 
     public function handle(JobAnalyzer $analyzer, SkillCatalog $catalog): void
     {
-        $job = $this->job->fresh();
+        $job = $this->posting->fresh();
         if (! $job || $job->extracted_at || $job->status !== 'active') {
             return;
         }
