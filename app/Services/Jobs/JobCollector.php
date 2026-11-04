@@ -19,11 +19,12 @@ class JobCollector
     }
 
     /**
-     * @return array{fetched: int, created: int, updated: int, outside_region: int, duplicated: int, closed: int}
+     * @return array{fetched: int, created: int, updated: int, outside_region: int, too_old: int, duplicated: int, closed: int}
      */
     public function collect(JobSource $source): array
     {
-        $stats = ['fetched' => 0, 'created' => 0, 'updated' => 0, 'outside_region' => 0, 'duplicated' => 0, 'closed' => 0];
+        $stats = ['fetched' => 0, 'created' => 0, 'updated' => 0, 'outside_region' => 0, 'too_old' => 0, 'duplicated' => 0, 'closed' => 0];
+        $oldest = now()->subDays((int) config('faro.jobs.max_age_days'));
         $connector = $this->connectors->for($source->type);
 
         if (! $connector || ! $connector->isConfigured()) {
@@ -37,6 +38,13 @@ class JobCollector
 
             if (! $job->international && ! Region::accepts($job->city, $job->state, $job->remote)) {
                 $stats['outside_region']++;
+
+                continue;
+            }
+
+            // Issues antigas do GitHub e anúncios esquecidos: não vale gravar para fechar logo em seguida
+            if ($job->publishedAt && $job->publishedAt->lt($oldest)) {
+                $stats['too_old']++;
 
                 continue;
             }

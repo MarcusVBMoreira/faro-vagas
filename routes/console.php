@@ -110,7 +110,7 @@ Artisan::command('faro:fetch-jobs {--source=* : slug da fonte (ex.: adzuna-br)}'
         try {
             $s = $collector->collect($source);
             $this->line(str_pad($source->slug, 18, '.')." lidas {$s['fetched']} · novas {$s['created']} · renovadas {$s['updated']}"
-                ." · fora da região {$s['outside_region']} · repetidas {$s['duplicated']} · fechadas {$s['closed']}");
+                ." · fora da região {$s['outside_region']} · antigas {$s['too_old']} · repetidas {$s['duplicated']} · fechadas {$s['closed']}");
         } catch (\Throwable $e) {
             report($e);
             // Mensagem curta, sem URL (a URL do Jooble contém a chave)

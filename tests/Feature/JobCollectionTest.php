@@ -125,6 +125,16 @@ class JobCollectionTest extends TestCase
         $this->assertSame('closed', $old->fresh()->status);
     }
 
+    public function test_old_postings_are_not_stored(): void
+    {
+        $this->fakeSources([$this->adzunaJob(['created' => now()->subDays(90)->toIso8601String()])]);
+
+        $output = $this->fetch(['adzuna-br']);
+
+        $this->assertStringContainsString('antigas 1', $output);
+        $this->assertSame(0, JobPosting::count());
+    }
+
     public function test_sources_without_keys_are_skipped(): void
     {
         config(['faro.jobs.adzuna.app_id' => null, 'faro.jobs.jooble.api_key' => null]);
