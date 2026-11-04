@@ -13,6 +13,11 @@ Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=2 --timeou
     ->withoutOverlapping(10)
     ->name('fila');
 
+// Batimento do cron: o faro:diagnostico mostra há quanto tempo o agendador rodou pela última vez.
+Schedule::call(fn () => \Illuminate\Support\Facades\Cache::forever('cron:heartbeat', now()->toIso8601String()))
+    ->everyMinute()
+    ->name('heartbeat');
+
 Schedule::command('queue:prune-failed --hours=168')->daily();
 Schedule::command('auth:clear-resets')->daily();
 
@@ -57,6 +62,10 @@ Artisan::command('faro:diagnostico', function () {
             fclose($socket);
         }
     }
+
+    $beat = \Illuminate\Support\Facades\Cache::get('cron:heartbeat');
+    $age = $beat ? (int) \Illuminate\Support\Carbon::parse($beat)->diffInSeconds(now()) : null;
+    $this->line('Cron (último batimento) .... '.($age === null ? '<error>nunca rodou</error>' : $ok($age < 180)." há {$age}s"));
 
     $this->line('Fila (jobs pendentes) ...... '.\Illuminate\Support\Facades\DB::table('jobs')->count());
     $this->line('Fila (jobs com falha) ...... '.\Illuminate\Support\Facades\DB::table('failed_jobs')->count());
