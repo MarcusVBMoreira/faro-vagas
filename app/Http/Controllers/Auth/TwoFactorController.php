@@ -8,6 +8,7 @@ use App\Services\Auth\EmailCodeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -21,6 +22,11 @@ class TwoFactorController extends Controller
 {
     public const SESSION_KEY = 'login.two_factor';
 
+    /** Cookie "este navegador é confiável": pula o código por 30 dias. */
+    public const TRUST_COOKIE = 'faro_2fa_trusted';
+
+    public const TRUST_DAYS = 30;
+
     public function show(Request $request): View|RedirectResponse
     {
         $user = $this->pendingUser($request);
@@ -29,7 +35,10 @@ class TwoFactorController extends Controller
             return redirect()->route('login');
         }
 
-        return view('auth.two-factor', ['email' => $this->mask($user->email)]);
+        return view('auth.two-factor', [
+            'email' => $this->mask($user->email),
+            'remember' => (bool) $request->session()->get(self::SESSION_KEY.'.remember'),
+        ]);
     }
 
     public function verify(Request $request, EmailCodeService $codes): RedirectResponse
@@ -51,7 +60,27 @@ class TwoFactorController extends Controller
         Auth::login($user, $remember);
         $request->session()->regenerate();
 
+        if ($request->boolean('trust_device')) {
+            Cookie::queue(self::TRUST_COOKIE, $user->id.'|'.self::trustToken($user), self::TRUST_DAYS * 24 * 60);
+        }
+
         return redirect()->intended(route('profile.show'));
+    }
+
+    /**
+     * O navegador já confirmou o código antes (e marcou "não pedir de novo")?
+     * O token depende da senha: trocar a senha invalida todos os navegadores confiáveis.
+     */
+    public static function isTrusted(Request $request, User $user): bool
+    {
+        [$id, $token] = explode('|', (string) $request->cookie(self::TRUST_COOKIE), 2) + [1 => ''];
+
+        return (int) $id === $user->id && hash_equals(self::trustToken($user), $token);
+    }
+
+    private static function trustToken(User $user): string
+    {
+        return hash_hmac('sha256', $user->id.'|'.$user->getAuthPassword(), (string) config('app.key'));
     }
 
     public function resend(Request $request, EmailCodeService $codes): RedirectResponse

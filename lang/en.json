@@ -224,6 +224,7 @@
     "Não conseguimos ler o texto desse PDF. Se ele é uma imagem escaneada, exporte o currículo do Word ou do Google Docs como PDF e envie de novo.": "We couldn't read the text in this PDF. If it's a scanned image, export your résumé from Word or Google Docs as a PDF and upload it again.",
     "Não conseguimos processar essa imagem. Tente outra foto.": "We couldn't process this image. Try another photo.",
     "Não foi possível analisar": "Could not be analyzed",
+    "Não pedir código neste navegador por :days dias": "Don't ask for a code on this browser for :days days",
     "Nível": "Level",
     "O Faro é um projeto de portfólio em desenvolvimento. Cada etapa vai para o GitHub e para o ar ao mesmo tempo, com testes automáticos e deploy contínuo.": "Faro is a portfolio project in development. Every step goes to GitHub and live at the same time, with automated tests and continuous deployment.",
     "O Faro é um projeto de portfólio que usa inteligência artificial para encontrar vagas compatíveis com o seu currículo, em todas as áreas profissionais. Esta página explica, de forma direta, o que fazemos com os seus dados.": "Faro is a portfolio project that uses artificial intelligence to find jobs that match your résumé, in every professional field. This page explains plainly what we do with your data.",

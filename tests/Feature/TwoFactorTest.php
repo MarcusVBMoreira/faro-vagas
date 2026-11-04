@@ -109,4 +109,87 @@ class TwoFactorTest extends TestCase
         $this->post('/entrar', ['email' => $user->email, 'password' => 'novaSenha99']);
         $this->assertAuthenticatedAs($user);
     }
+
+    private function loginWithCode(array $extra = [], array $loginExtra = []): \Illuminate\Testing\TestResponse
+    {
+        Notification::fake();
+        $this->post('/entrar', ['email' => 'ana@exemplo.com', 'password' => 'senha1234', ...$loginExtra]);
+
+        $code = null;
+        Notification::assertSentTo(User::firstWhere('email', 'ana@exemplo.com'), EmailCodeNotification::class, function ($n) use (&$code) {
+            $code = $n->code;
+
+            return true;
+        });
+
+        return $this->post('/entrar/codigo', ['code' => $code, ...$extra]);
+    }
+
+    public function test_keep_me_signed_in_works_with_2fa(): void
+    {
+        $this->userWith2fa();
+
+        $response = $this->loginWithCode(['trust_device' => '1'], ['remember' => '1']);
+
+        $response->assertRedirect(route('profile.show'));
+        $response->assertCookie(\Illuminate\Support\Facades\Auth::guard('web')->getRecallerName());
+        $response->assertCookie(\App\Http\Controllers\Auth\TwoFactorController::TRUST_COOKIE);
+    }
+
+    public function test_code_page_pre_checks_trust_option_when_remember_was_ticked(): void
+    {
+        Notification::fake();
+        $this->userWith2fa();
+
+        $this->post('/entrar', ['email' => 'ana@exemplo.com', 'password' => 'senha1234', 'remember' => '1']);
+
+        $this->get('/entrar/codigo')->assertSee('name="trust_device" value="1"', false)->assertSee('checked', false);
+    }
+
+    public function test_trusted_browser_skips_the_code_next_time(): void
+    {
+        $user = $this->userWith2fa();
+        $trust = $this->loginWithCode(['trust_device' => '1'])
+            ->getCookie(\App\Http\Controllers\Auth\TwoFactorController::TRUST_COOKIE)->getValue();
+
+        $this->post('/sair');
+        Notification::fake();
+
+        $this->withCookie(\App\Http\Controllers\Auth\TwoFactorController::TRUST_COOKIE, $trust)
+            ->post('/entrar', ['email' => 'ana@exemplo.com', 'password' => 'senha1234'])
+            ->assertRedirect(route('profile.show'));
+
+        $this->assertAuthenticatedAs($user);
+        Notification::assertNothingSent();
+    }
+
+    public function test_without_trust_the_code_is_asked_again(): void
+    {
+        $this->userWith2fa();
+        $this->loginWithCode()->assertCookieMissing(\App\Http\Controllers\Auth\TwoFactorController::TRUST_COOKIE);
+        $this->post('/sair');
+
+        $this->post('/entrar', ['email' => 'ana@exemplo.com', 'password' => 'senha1234'])
+            ->assertRedirect(route('two-factor.show'));
+    }
+
+    public function test_changing_password_revokes_trusted_browsers(): void
+    {
+        $user = $this->userWith2fa();
+        $trust = $this->loginWithCode(['trust_device' => '1'])
+            ->getCookie(\App\Http\Controllers\Auth\TwoFactorController::TRUST_COOKIE)->getValue();
+        $this->post('/sair');
+
+        $user->update(['password' => 'outraSenha99']);
+
+        Notification::fake();
+        $this->withCookie(\App\Http\Controllers\Auth\TwoFactorController::TRUST_COOKIE, $trust)
+            ->post('/entrar', ['email' => 'ana@exemplo.com', 'password' => 'outraSenha99'])
+            ->assertRedirect(route('two-factor.show'));
+
+        // e um cookie forjado para outro usuário também não vale
+        $this->withCookie(\App\Http\Controllers\Auth\TwoFactorController::TRUST_COOKIE, $user->id.'|forjado')
+            ->post('/entrar', ['email' => 'ana@exemplo.com', 'password' => 'outraSenha99'])
+            ->assertRedirect(route('two-factor.show'));
+    }
 }

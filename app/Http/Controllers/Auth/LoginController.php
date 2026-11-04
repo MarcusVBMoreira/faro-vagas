@@ -50,8 +50,8 @@ class LoginController extends Controller
         /** @var User $user */
         $user = User::where('email', $credentials['email'])->first();
 
-        // Verificação em duas etapas por e-mail, se a pessoa ligou.
-        if ($user->two_factor_email) {
+        // Verificação em duas etapas por e-mail, se a pessoa ligou (e o navegador ainda não é confiável).
+        if ($user->two_factor_email && ! TwoFactorController::isTrusted($request, $user)) {
             return TwoFactorController::start($request, $user, $request->boolean('remember'), $codes);
         }
 
