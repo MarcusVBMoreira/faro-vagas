@@ -39,11 +39,11 @@
                     <p class="text-sm text-ink-muted">{{ $profile->desired_role }}</p>
                 @endif
 
-                <form method="POST" action="{{ route('avatar.store') }}" enctype="multipart/form-data" class="mt-4">
+                <form method="POST" action="{{ route('avatar.store') }}" enctype="multipart/form-data" class="mt-4" data-loading="{{ __('Enviando foto…') }}">
                     @csrf
                     <label class="btn btn-secondary h-9 cursor-pointer text-xs">
                         {{ $user->avatar_path ? __('Trocar foto') : __('Adicionar foto (opcional)') }}
-                        <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" class="sr-only" onchange="this.form.submit()">
+                        <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" class="sr-only" onchange="this.form.requestSubmit()">
                     </label>
                 </form>
                 @if ($user->avatar_path)
@@ -110,7 +110,7 @@
                     @endif
                 @endif
 
-                <form method="POST" action="{{ route('resume.store') }}" enctype="multipart/form-data" class="mt-5 flex flex-wrap items-center gap-3">
+                <form method="POST" action="{{ route('resume.store') }}" enctype="multipart/form-data" class="mt-5 flex flex-wrap items-center gap-3" data-loading="{{ __('Enviando currículo…') }}">
                     @csrf
                     <label class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md border border-dashed border-line bg-surface px-4 py-3 text-sm hover:border-farol">
                         <svg class="h-5 w-5 shrink-0 text-ink-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 18v-6"/><path d="m9 15 3-3 3 3"/></svg>
@@ -126,7 +126,7 @@
             </section>
 
             {{-- Formulário principal do perfil --}}
-            <form method="POST" action="{{ route('profile.update') }}" class="space-y-6">
+            <form method="POST" action="{{ route('profile.update') }}" class="space-y-6" data-loading="{{ __('Salvando perfil…') }}">
                 @csrf
                 @method('PUT')
 

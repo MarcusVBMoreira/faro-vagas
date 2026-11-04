@@ -27,6 +27,17 @@ class HomePageTest extends TestCase
         $this->actingAs(\App\Models\User::factory()->create())->get('/perfil')->assertSee('sticky top-0', false);
     }
 
+    public function test_loading_screen_is_on_every_page(): void
+    {
+        $this->get('/')->assertSee('id="page-loading"', false);
+        $this->get('/entrar')->assertSee('id="page-loading"', false);
+
+        $this->actingAs(\App\Models\User::factory()->create())->get('/perfil')
+            ->assertSee('id="page-loading"', false)
+            ->assertSee('data-loading="Salvando perfil…"', false)
+            ->assertSee('this.form.requestSubmit()', false); // submit() não dispara o evento que mostra a tela
+    }
+
     public function test_health_check_is_up(): void
     {
         $this->get('/up')->assertOk();

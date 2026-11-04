@@ -14,7 +14,7 @@
     <ul class="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-md border border-line bg-raised py-1 text-sm text-ink shadow-lg">
         @foreach ($locales as $code => $name)
             <li>
-                <a href="{{ route('locale', $code) }}" lang="{{ str_replace('_', '-', $code) }}"
+                <a href="{{ route('locale', $code) }}" data-loading lang="{{ str_replace('_', '-', $code) }}"
                    class="flex items-center justify-between px-3 py-2 hover:bg-sunken {{ $code === $current ? 'font-semibold' : '' }}">
                     {{ $name }}
                     @if ($code === $current)

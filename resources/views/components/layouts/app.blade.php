@@ -18,5 +18,17 @@
 </head>
 <body class="min-h-screen">
     {{ $slot }}
+
+    {{-- Tela de carregamento (controlada por resources/js/app.js) --}}
+    <div id="page-loading" class="fixed inset-0 z-[100] hidden items-center justify-center bg-noite/50 backdrop-blur-sm"
+         role="status" aria-live="polite" aria-hidden="true" data-default="{{ __('Carregando…') }}">
+        <div class="flex items-center gap-3 rounded-lg bg-raised px-6 py-4 text-ink shadow-2xl">
+            <svg class="h-6 w-6 text-farol motion-safe:animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.25" stroke-width="3"/>
+                <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <span class="font-medium" data-loading-text>{{ __('Carregando…') }}</span>
+        </div>
+    </div>
 </body>
 </html>
