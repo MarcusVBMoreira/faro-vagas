@@ -42,6 +42,15 @@ class JobCollectionTest extends TestCase
         ], $overrides);
     }
 
+    /** Roda a coleta e devolve a saída inteira (mensagens de falha mostram tudo). */
+    private function fetch(array $sources): string
+    {
+        $this->withoutMockingConsoleOutput();
+        $this->assertSame(0, \Illuminate\Support\Facades\Artisan::call('faro:fetch-jobs', ['--source' => $sources]));
+
+        return \Illuminate\Support\Facades\Artisan::output();
+    }
+
     private function fakeSources(array $adzuna, array $jooble = [], array $remotive = [], array $github = []): void
     {
         Http::fake([
@@ -60,11 +69,10 @@ class JobCollectionTest extends TestCase
             $this->adzunaJob(['id' => '2', 'redirect_url' => 'https://x/2', 'title' => 'Atendente home office', 'location' => ['display_name' => 'Recife, Pernambuco', 'area' => ['Brasil', 'Pernambuco', 'Recife']]]),
         ]);
 
-        $this->artisan('faro:fetch-jobs', ['--source' => ['adzuna-br']])
-            ->expectsOutputToContain('novas 2')
-            ->expectsOutputToContain('fora da região 1')
-            ->doesntExpectOutputToContain('chave-teste')
-            ->assertSuccessful();
+        $output = $this->fetch(['adzuna-br']);
+        $this->assertStringContainsString('novas 2', $output);
+        $this->assertStringContainsString('fora da região 1', $output);
+        $this->assertStringNotContainsString('chave-teste', $output);
 
         $job = JobPosting::where('external_id', '4512')->firstOrFail();
         $this->assertSame('Auxiliar Administrativo Júnior', $job->title); // HTML removido
