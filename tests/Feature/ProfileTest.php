@@ -70,7 +70,7 @@ class ProfileTest extends TestCase
         $this->assertSame(['B'], $profile->driver_license);
         $this->assertSame(4, $profile->current_semester);
         $this->assertSame(\App\Enums\EducationLevel::Tecnico, $profile->education_level);
-        $this->assertSame([['language' => 'ingles', 'level' => 'avancado'], ['language' => 'libras', 'level' => 'basico']], $profile->languages);
+        $this->assertEquals([['language' => 'ingles', 'level' => 'avancado'], ['language' => 'libras', 'level' => 'basico']], $profile->languages); // o JSON do MySQL reordena as chaves
         $this->assertSame('avancado', $profile->english_level);
         $this->assertTrue($profile->open_to_work);
         $this->assertFalse($profile->is_pcd);

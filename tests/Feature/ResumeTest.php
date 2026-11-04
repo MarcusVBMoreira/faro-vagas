@@ -271,7 +271,7 @@ class ResumeTest extends TestCase
         $this->assertSame('(11) 91234-5678', $profile->phone);
         $this->assertSame(['A', 'B'], $profile->driver_license);
         $this->assertSame(['Diadema', 'SP'], [$profile->city, $profile->state]);
-        $this->assertSame([['language' => 'espanhol', 'level' => 'basico']], $profile->languages);
+        $this->assertEquals([['language' => 'espanhol', 'level' => 'basico']], $profile->languages);
 
         $roles = $profile->experiences()->reorder('id')->pluck('role')->all();
         $this->assertSame(['Manual, deve ficar', 'Auxiliar de logística', 'Repositor'], $roles);

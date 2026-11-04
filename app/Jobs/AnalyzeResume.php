@@ -52,14 +52,14 @@ class AnalyzeResume implements ShouldQueue
             $data = $analyzer->analyze($resume->extracted_text, $resume->user);
             $updater->applyFromAi($resume->user, $data);
         } catch (UnreadablePdfException $e) {
-            $this->markFailed($resume, __('Não conseguimos ler o texto desse PDF. Se ele é uma imagem escaneada, exporte o currículo do Word ou do Google Docs como PDF e envie de novo.'));
+            $this->markFailed($resume, __('Não conseguimos ler o texto desse PDF. Se ele é uma imagem escaneada, exporte o currículo do Word ou do Google Docs como PDF e envie de novo.', [], 'pt_BR'));
 
             return;
         } catch (AiException $e) {
             Log::warning('Falha na IA ao analisar currículo', ['resume' => $resume->id, 'erro' => $e->getMessage()]);
 
             if (str_contains($e->getMessage(), 'Limite diário')) {
-                $this->markFailed($resume, __('Você atingiu o limite de análises de hoje. Tente de novo amanhã.'));
+                $this->markFailed($resume, __('Você atingiu o limite de análises de hoje. Tente de novo amanhã.', [], 'pt_BR'));
 
                 return;
             }
@@ -71,7 +71,7 @@ class AnalyzeResume implements ShouldQueue
                 return;
             }
 
-            $this->markFailed($resume, __('A IA está indisponível no momento. Tente enviar de novo em alguns minutos.'));
+            $this->markFailed($resume, __('A IA está indisponível no momento. Tente enviar de novo em alguns minutos.', [], 'pt_BR'));
 
             return;
         }
@@ -81,9 +81,13 @@ class AnalyzeResume implements ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
-        $this->markFailed($this->resume->fresh() ?? $this->resume, __('Algo deu errado ao analisar o currículo. Tente enviar de novo.'));
+        $this->markFailed($this->resume->fresh() ?? $this->resume, __('Algo deu errado ao analisar o currículo. Tente enviar de novo.', [], 'pt_BR'));
     }
 
+    /**
+     * A mensagem é gravada em português (a chave da tradução) e traduzida na hora de exibir,
+     * no idioma de quem estiver vendo a página.
+     */
     private function markFailed(Resume $resume, string $message): void
     {
         $resume->update(['status' => Resume::STATUS_FAILED, 'error_message' => $message]);
