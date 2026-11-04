@@ -120,8 +120,10 @@ A análise do currículo roda numa fila, e na hospedagem compartilhada quem proc
 hPanel → Avançado → **Cron Jobs** → comando personalizado, a cada minuto:
 
 ```
-cd /home/u727297856/domains/faro.marcusmoreira.com.br/faro-app && php artisan schedule:run >> /dev/null 2>&1
+/bin/bash /home/u727297856/domains/faro.marcusmoreira.com.br/faro-app/cron/schedule.sh
 ```
+
+O script `cron/schedule.sh` faz o `cd`, roda `php artisan schedule:run` e grava a saída em `storage/logs/cron.log`. O campo do hPanel não lidava bem com redirecionamentos (`>> ... 2>&1`) direto no comando.
 
 ## Problemas comuns
 - **`Permission denied (publickey)`**: a chave pública não foi adicionada no hPanel, ou o `SSH_KEY` não tem o conteúdo inteiro da chave privada.
