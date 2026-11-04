@@ -9,22 +9,22 @@ Regra do projeto: **toda etapa termina no ar**. Cada push na `main` roda os test
 - [x] Página inicial com a identidade visual
 - [x] Testes automáticos (PHPUnit) rodando em MySQL 8 no GitHub Actions
 - [x] Deploy automático na Hostinger via SSH (docs/DEPLOY.md)
-- [ ] Configurar os secrets e fazer o primeiro deploy
+- [x] Configurar os secrets e fazer o primeiro deploy
+- [x] Benchmark de IA local no VPS e publicação em `ia.marcusmoreira.com.br` (HTTPS + token)
 
-## Semana 1 · Contas e perfil com IA
-- [ ] Cadastro, login, recuperação de senha (Laravel Breeze, telas com a marca)
-- [ ] E-mails de verificação pelo SMTP da Hostinger
-- [ ] Upload do currículo em PDF (até 5 MB) e extração do texto (`smalot/pdfparser`)
-- [ ] Serviço de IA (`app/Services/Ai`) com o primeiro provedor (Gemini) e registro em `ai_usage_logs`
-- [ ] A IA lê o currículo e devolve um JSON validado com o perfil
-- [ ] Tela "Meu perfil": revisar habilidades, nível, cidade e modalidade
-- [ ] Excluir conta e todos os dados (LGPD)
+## Semana 1 · Contas e perfil com IA ✅
+- [x] Cadastro, login (com limite de tentativas), logout e redefinição de senha, tudo em pt-BR
+- [x] E-mails de redefinição pelo SMTP da Hostinger (`no-reply@marcusmoreira.com.br`)
+- [x] Upload do currículo em PDF (até 5 MB, 5 por dia) e extração do texto (`smalot/pdfparser`)
+- [x] IA própria no VPS (Ollama + `qwen2.5:3b`) com cliente no Laravel, token, log de uso e limite diário
+- [x] A IA lê o currículo e devolve JSON (com JSON Schema), corrigido pelo `ProfileNormalizer`
+- [x] Tela "Meu perfil": revisar habilidades, nível, cidade e modalidade; status da análise ao vivo
+- [x] Política de privacidade e exclusão de conta com todos os dados (LGPD)
 - **Entregável:** envio meu currículo e vejo meu perfil montado.
 
 ## Semana 2 · Coleta de vagas
 - [ ] Interface `JobSourceConnector` e o conector de issues do GitHub
 - [ ] Comando `faro:fetch-jobs` agendado 1x por dia
-- [ ] Cron da Hostinger rodando o agendador do Laravel
 - [ ] A IA estrutura cada vaga (nível, modalidade, cidade, tecnologias) em fila
 - [ ] Página de vagas com busca e filtros
 - [ ] Adicionar vaga manualmente (colar link ou texto)

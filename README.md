@@ -2,78 +2,110 @@
   <img src="public/images/faro-logo.svg" alt="Faro" height="64">
 </p>
 
-<p align="center"><strong>A IA que encontra as vagas certas para você.</strong></p>
+<p align="center"><strong>The AI that finds the right jobs for you.</strong></p>
 
 <p align="center">
   <a href="https://faro.marcusmoreira.com.br">faro.marcusmoreira.com.br</a> ·
   <a href="docs/ROADMAP.md">Roadmap</a> ·
-  <a href="docs/DATABASE.md">Banco de dados</a> ·
+  <a href="docs/DATABASE.md">Database</a> ·
   <a href="docs/DEPLOY.md">Deploy</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/MarcusVBMoreira/faro-vagas/actions/workflows/ci-deploy.yml"><img src="https://github.com/MarcusVBMoreira/faro-vagas/actions/workflows/ci-deploy.yml/badge.svg" alt="CI and Deploy"></a>
 </p>
 
 ---
 
-O **Faro** é uma plataforma para estudantes e pessoas em início de carreira em tecnologia. Você envia o currículo, a IA monta seu perfil e o sistema mostra as vagas de estágio e júnior mais compatíveis com você, cada uma com uma **nota de compatibilidade**, seus **pontos fortes** e o que **falta aprender**.
+**Faro** helps students and early-career developers in Brazil find internship and junior tech jobs. You upload your résumé, an AI builds your profile, and Faro ranks job openings by how well they fit you, showing a **match score**, your **strengths** and the **skills you're missing** for each one.
 
-> 🚧 Projeto de portfólio em construção, desenvolvido em público. Acompanhe pelo [roadmap](docs/ROADMAP.md).
+The product is in Brazilian Portuguese (it targets the Brazilian job market); the code and this documentation are in English and Portuguese.
 
-## Como o match funciona
+> 🚧 Portfolio project, built in public. Follow the progress on the [roadmap](docs/ROADMAP.md).
 
-Mandar todas as vagas para a IA seria caro e lento. O Faro usa um funil em três etapas:
+## Features
 
-1. **Filtros SQL**: nível, modalidade, cidade e semestre eliminam a maior parte das vagas sem custo.
-2. **Similaridade semântica**: o perfil e cada vaga viram vetores (embeddings) e o sistema separa as ~20 vagas mais parecidas.
-3. **Avaliação da IA**: só essas 20 vão para o modelo de linguagem, que devolve um JSON validado com nota, pontos fortes, lacunas e explicação.
+- [x] Sign up, login with brute-force throttling, password reset by email
+- [x] Résumé upload (PDF) with text extraction and AI parsing in a background queue
+- [x] "My profile" page: review and fix what the AI extracted (skills, level, city, work mode...)
+- [x] Account deletion that wipes all user data and files (LGPD, Brazil's GDPR)
+- [ ] Daily job collection from public sources *(week 2)*
+- [ ] Job matching with embeddings + score *(week 3)*
+- [ ] Application Kanban board and daily email digest *(week 4)*
 
-### IA própria, sem API paga
+## Self-hosted AI, no paid API
 
-A IA roda num VPS próprio com **Ollama**, publicada em `ia.marcusmoreira.com.br` atrás de nginx com HTTPS, token e limite de requisições:
+The AI runs on the project's own VPS with **Ollama**, exposed at `ia.marcusmoreira.com.br` behind nginx with HTTPS, a bearer token and rate limiting. Résumés **never leave the project's servers**, and the cost per request is zero.
 
-| Parte | Como | Por quê |
+```mermaid
+flowchart LR
+    U[User] --> A["faro.marcusmoreira.com.br<br/>Laravel · shared hosting"]
+    A -- "HTTPS + token" --> N["ia.marcusmoreira.com.br<br/>nginx · VPS"]
+    N -- "localhost only" --> O["Ollama<br/>bge-m3 · qwen2.5:3b"]
+    A --> DB[(MySQL)]
+```
+
+Before choosing the models, I benchmarked them on the VPS (1 vCPU, 4 GB RAM, no GPU). The scripts and results are in [`ops/vps/`](ops/vps/):
+
+| Task | Where it runs | Why |
 |---|---|---|
-| Embeddings | `bge-m3` no VPS (~1 s por vaga) | Rápido em CPU e entende português |
-| Estruturar vagas e currículos | `qwen2.5:3b` no VPS, em fila | Acertou todos os campos no teste; o modelo 1.5b errava nível e tipos |
-| Nota, pontos fortes e lacunas | Código PHP (comparação das listas de habilidades + similaridade) | Resposta exata: no teste, os modelos pequenos inventavam lacunas |
+| Embeddings | `bge-m3` on the VPS (~1 s per job posting) | Fast on CPU and handles Portuguese well |
+| Parsing résumés and job postings into JSON | `qwen2.5:3b` on the VPS, in a queue (~25–40 s) | Got every field right in the benchmark; the 1.5b model mislabeled the seniority level |
+| Match score, strengths and missing skills | **Plain PHP** (skill list comparison + similarity) | Must be exact: in the benchmark, small models invented missing skills |
 
-Resultado: custo zero por uso e **currículos que nunca saem dos servidores do projeto** (LGPD). Os testes de desempenho estão em `ops/vps/`.
+What small models still get wrong ("3º semestre" instead of `3`, `"Mauá/SP"` as a city, accented enum values) is fixed deterministically in [`ProfileNormalizer`](app/Support/ProfileNormalizer.php), and the response is constrained with a JSON Schema.
 
-## Tecnologias
+## How matching works *(weeks 2–3)*
+
+Sending every job posting to an LLM would be slow and expensive, so Faro uses a three-step funnel:
+
+1. **SQL filters**: level, work mode, location and semester discard most postings at no cost.
+2. **Semantic similarity**: the profile and each posting become embeddings; the ~20 closest postings move on.
+3. **Score in code**: required vs. nice-to-have skills the candidate has, plus similarity, produce the score, strengths and gaps, with no hallucinations.
+
+## Tech stack
 
 - **Laravel 12** (PHP 8.3), Blade, Tailwind CSS 4, Vite
-- **MySQL** em produção, filas e cache no próprio banco
-- **IA**: Ollama no VPS (`bge-m3` + `qwen2.5:3b`), acessado pelo Laravel via HTTPS
-- **PHPUnit** com testes rodando em MySQL 8 no **GitHub Actions**
-- **Deploy contínuo** na Hostinger via SSH a cada push na `main`
+- **MySQL** in production; queue and cache in the database (no Redis needed on shared hosting)
+- **Ollama** on a VPS (`bge-m3` + `qwen2.5:3b`), called over HTTPS
+- **PHPUnit** tests running against MySQL 8 on **GitHub Actions**
+- **Continuous deployment** to Hostinger over SSH on every push to `main`, plus VPS operations as versioned scripts run by GitHub Actions
 
-## Rodando localmente
+## Running locally
 
-Requisitos: PHP 8.2+, Composer, Node 20+ (no Windows, o XAMPP já traz o PHP).
+Requirements: PHP 8.2+, Composer, Node 20+ (on Windows, XAMPP ships PHP).
 
 ```bash
 git clone https://github.com/MarcusVBMoreira/faro-vagas.git
 cd faro-vagas
 composer install
-copy .env.example .env        # no Linux/Mac: cp .env.example .env
+cp .env.example .env          # Windows: copy .env.example .env
 php artisan key:generate
-php artisan migrate --seed    # usa SQLite em database/database.sqlite
+php artisan migrate --seed    # uses SQLite at database/database.sqlite
 npm install
-composer run dev              # servidor em http://localhost:8000
+composer run dev              # http://localhost:8000 (server, queue, logs and Vite)
 ```
 
-Para usar o MySQL do XAMPP, troque no `.env`: `DB_CONNECTION=mysql`, `DB_DATABASE=faro`, `DB_USERNAME=root`, `DB_PASSWORD=` (vazio).
+To use XAMPP's MySQL, set `DB_CONNECTION=mysql`, `DB_DATABASE=faro`, `DB_USERNAME=root` and an empty `DB_PASSWORD` in `.env`.
+Résumé parsing needs `AI_API_KEY` (the token of your Ollama endpoint) or your own local Ollama with `AI_BASE_URL=http://localhost:11434`.
 
-Testes: `php artisan test`
+Tests: `php artisan test`
 
-## Estrutura
+## Project structure
 
 ```
-app/Enums/        níveis, modalidades e status do Kanban
-app/Models/       Profile, Skill, Resume, JobSource, JobPosting, JobMatch, Application...
-config/faro.php   configurações do projeto (IA, limites, match)
-database/         migrations, seeders e factories
-docs/             roadmap, banco de dados, deploy e identidade visual
+app/Contracts/AiClient.php     AI provider interface (Ollama today, swappable)
+app/Services/Ai/               Ollama client: token, timeouts, usage log, daily limit
+app/Services/Resume/           PDF text extraction and résumé analysis
+app/Support/ProfileNormalizer  fixes and normalizes the model's JSON
+app/Services/SkillCatalog      "js" → JavaScript, "C#" → c-sharp: one skill vocabulary
+app/Jobs/AnalyzeResume         background job: PDF → AI → profile
+database/                      migrations, seeders and factories
+docs/                          roadmap, database model, deploy guide, brand
+ops/vps/                       VPS scripts (benchmark, swap, nginx + HTTPS + token)
+design/                        brand assets and screenshots (not deployed)
 ```
 
-## Autor
+## Author
 
-**Marcus Moreira**, estudante de Engenharia de Software na Fundação Santo André.
+**Marcus Moreira**, Software Engineering student at Fundação Santo André (Brazil).

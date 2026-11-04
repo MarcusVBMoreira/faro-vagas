@@ -101,10 +101,10 @@ MAIL_FROM_ADDRESS=no-reply@marcusmoreira.com.br
 MAIL_FROM_NAME="Faro"
 
 FARO_REPO_URL=https://github.com/MarcusVBMoreira/faro-vagas
-AI_PROVIDER=gemini
-AI_API_KEY=
-AI_MODEL=
-AI_EMBEDDING_MODEL=
+AI_BASE_URL=https://ia.marcusmoreira.com.br
+AI_API_KEY=O_MESMO_VALOR_DO_SECRET_FARO_IA_TOKEN
+AI_MODEL=qwen2.5:3b
+AI_EMBEDDING_MODEL=bge-m3
 AI_DAILY_LIMIT_PER_USER=50
 ```
 
@@ -115,7 +115,8 @@ AI_DAILY_LIMIT_PER_USER=50
 ### 8. Primeiro deploy
 Actions → **CI e Deploy** → **Run workflow** (ou faça um push na `main`). No fim, o passo "Conferir se o site respondeu" acessa `https://faro.marcusmoreira.com.br/up`.
 
-## Cron (a partir da semana 2)
+## Cron (obrigatório desde a semana 1)
+A análise do currículo roda numa fila, e na hospedagem compartilhada quem processa a fila é o agendador do Laravel.
 hPanel → Avançado → **Cron Jobs** → comando personalizado, a cada minuto:
 
 ```
