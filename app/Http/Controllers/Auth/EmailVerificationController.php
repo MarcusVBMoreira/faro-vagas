@@ -25,11 +25,12 @@ class EmailVerificationController extends Controller
         }
 
         // Contas criadas antes da verificação existir (ou com código vencido) recebem um código ao chegar aqui.
+        $mailFailed = false;
         if (! $codes->hasActiveCode($user, EmailCodeService::VERIFY_EMAIL)) {
-            $codes->send($user, EmailCodeService::VERIFY_EMAIL);
+            $mailFailed = ! $codes->send($user, EmailCodeService::VERIFY_EMAIL);
         }
 
-        return view('auth.verify-email', ['email' => $user->email]);
+        return view('auth.verify-email', ['email' => $user->email, 'mailFailed' => $mailFailed]);
     }
 
     public function verify(Request $request, EmailCodeService $codes): RedirectResponse
@@ -62,7 +63,9 @@ class EmailVerificationController extends Controller
         }
 
         RateLimiter::hit($key, 60);
-        $codes->send($user, EmailCodeService::VERIFY_EMAIL);
+        if (! $codes->send($user, EmailCodeService::VERIFY_EMAIL)) {
+            return back()->withErrors(['code' => __('Não conseguimos enviar o e-mail agora. Tente de novo em alguns minutos.')]);
+        }
 
         return back()->with('status', __('Enviamos um novo código para :email.', ['email' => $user->email]));
     }

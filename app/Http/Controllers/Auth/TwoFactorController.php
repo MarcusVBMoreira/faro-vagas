@@ -68,7 +68,9 @@ class TwoFactorController extends Controller
         }
 
         RateLimiter::hit($key, 60);
-        $codes->send($user, EmailCodeService::LOGIN);
+        if (! $codes->send($user, EmailCodeService::LOGIN)) {
+            return back()->withErrors(['code' => __('Não conseguimos enviar o e-mail agora. Tente de novo em alguns minutos.')]);
+        }
 
         return back()->with('status', __('Enviamos um novo código.'));
     }
@@ -82,7 +84,11 @@ class TwoFactorController extends Controller
             'expires_at' => now()->addMinutes(EmailCodeService::TTL_MINUTES)->timestamp,
         ]);
 
-        $codes->send($user, EmailCodeService::LOGIN);
+        if (! $codes->send($user, EmailCodeService::LOGIN)) {
+            $request->session()->forget(self::SESSION_KEY);
+
+            return back()->withInput($request->only('email'))->withErrors(['email' => __('Não conseguimos enviar o e-mail agora. Tente de novo em alguns minutos.')]);
+        }
 
         return redirect()->route('two-factor.show');
     }

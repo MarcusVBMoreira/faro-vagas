@@ -16,3 +16,4 @@ echo "--- origem (arquivo:linha) dos mesmos erros"
 grep -oE '\(code: [0-9]+\): .{0,300} at /[^ ]+:[0-9]+\)' "$LOG" | tail -5 \
   | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email>/g' \
   | sed -E 's#/home/[^/]+/domains/[^/]+/faro-app/##g' | cut -c1-500
+true

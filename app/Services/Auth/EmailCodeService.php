@@ -23,20 +23,34 @@ class EmailCodeService
 
     public const MAX_ATTEMPTS = 5;
 
-    public function send(User $user, string $purpose): void
+    /**
+     * Gera e envia um código novo. Devolve false se o e-mail não pôde ser enviado
+     * (SMTP fora do ar ou senha errada): o erro vai para o log e a tela avisa a pessoa,
+     * em vez de quebrar com erro 500.
+     */
+    public function send(User $user, string $purpose): bool
     {
         $code = (string) random_int(100000, 999999);
 
         $user->verificationCodes()->where('purpose', $purpose)->whereNull('consumed_at')
             ->update(['consumed_at' => now()]);
 
-        $user->verificationCodes()->create([
+        $record = $user->verificationCodes()->create([
             'purpose' => $purpose,
             'code_hash' => $this->hash($code),
             'expires_at' => now()->addMinutes(self::TTL_MINUTES),
         ]);
 
-        $user->notify(new EmailCodeNotification($code, $purpose));
+        try {
+            $user->notify(new EmailCodeNotification($code, $purpose));
+        } catch (\Throwable $e) {
+            report($e);
+            $record->delete(); // código que ninguém recebeu não deve contar como "já enviado"
+
+            return false;
+        }
+
+        return true;
     }
 
     /** Existe um código ainda válido (não usado, não expirado) para esse fim? */

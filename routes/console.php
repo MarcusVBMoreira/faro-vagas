@@ -59,6 +59,17 @@ Artisan::command('faro:diagnostico', function () {
         $socket = @fsockopen(($port === 465 ? 'ssl://' : '').$host, $port, $errno, $errstr, 10);
         $this->line('SMTP alcançável ............ '.$ok((bool) $socket));
         $this->line('Senha do e-mail definida ... '.$ok(filled(config('mail.mailers.smtp.password'))));
+        // Login de verdade no SMTP (sem enviar e-mail). Só OK/FALHOU: a mensagem do servidor não é impressa.
+        try {
+            $transport = app('mailer')->getSymfonyTransport();
+            if (method_exists($transport, 'start')) {
+                $transport->start();
+                $transport->stop();
+            }
+            $this->line('SMTP aceita a senha ........ '.$ok(true));
+        } catch (\Throwable $e) {
+            $this->line('SMTP aceita a senha ........ '.$ok(false).' (confira MAIL_USERNAME/MAIL_PASSWORD no ENV_FILE)');
+        }
         if ($socket) {
             fclose($socket);
         }

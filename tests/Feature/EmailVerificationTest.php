@@ -137,4 +137,59 @@ class EmailVerificationTest extends TestCase
         $this->assertSame('Confirm your email on Faro: 123456', $mail->subject);
         $this->assertSame('Hi, Ana!', $mail->greeting);
     }
+
+    private function breakSmtp(): void
+    {
+        // SMTP que recusa a conexão: o mesmo efeito de senha errada ou servidor fora do ar.
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => '127.0.0.1',
+            'mail.mailers.smtp.port' => 1,
+            'mail.mailers.smtp.timeout' => 2,
+        ]);
+    }
+
+    public function test_mail_failure_shows_a_warning_instead_of_a_server_error(): void
+    {
+        $this->breakSmtp();
+        $user = User::factory()->unverified()->create();
+
+        $this->actingAs($user)->get('/verificar-email')
+            ->assertOk()
+            ->assertSee('Não conseguimos enviar o e-mail agora.');
+
+        $this->assertDatabaseCount('verification_codes', 0); // código não entregue não fica valendo
+
+        $this->actingAs($user)->post('/verificar-email/reenviar')->assertSessionHasErrors('code');
+    }
+
+    public function test_signup_still_works_when_mail_is_down(): void
+    {
+        $this->breakSmtp();
+
+        $this->post('/cadastro', [
+            'name' => 'Ana Souza',
+            'email' => 'ana@exemplo.com',
+            'password' => 'senha1234',
+            'password_confirmation' => 'senha1234',
+            'terms' => '1',
+        ])->assertRedirect(route('verification.notice'));
+
+        $this->get('/verificar-email')->assertOk()->assertSee('Não conseguimos enviar o e-mail agora.');
+    }
+
+    public function test_2fa_login_and_password_reset_survive_mail_failure(): void
+    {
+        $this->breakSmtp();
+        User::factory()->create(['email' => 'ana@exemplo.com', 'password' => 'senha1234', 'two_factor_email' => true]);
+
+        $this->from('/entrar')->post('/entrar', ['email' => 'ana@exemplo.com', 'password' => 'senha1234'])
+            ->assertRedirect('/entrar')
+            ->assertSessionHasErrors(['email' => 'Não conseguimos enviar o e-mail agora. Tente de novo em alguns minutos.']);
+        $this->assertGuest();
+
+        $this->from('/esqueci-a-senha')->post('/esqueci-a-senha', ['email' => 'ana@exemplo.com'])
+            ->assertRedirect('/esqueci-a-senha')
+            ->assertSessionHasErrors('email');
+    }
 }

@@ -1,4 +1,10 @@
 <x-layouts.auth :title="__('Confirme seu e-mail')" :subtitle="__('Enviamos um código de 6 dígitos para :email. Ele vale por 15 minutos.', ['email' => $email])">
+    @if ($mailFailed ?? false)
+        <div class="mb-5 rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
+            {{ __('Não conseguimos enviar o e-mail agora. Tente de novo em alguns minutos.') }}
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('verification.verify') }}" class="space-y-5">
         @csrf
         <x-code-input />

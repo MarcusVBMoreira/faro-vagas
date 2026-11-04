@@ -20,6 +20,20 @@ class AuthTest extends TestCase
         $this->get('/privacidade')->assertOk()->assertSee('Política de privacidade');
     }
 
+    public function test_password_fields_have_a_show_password_button(): void
+    {
+        foreach (['/entrar', '/cadastro'] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertSee('aria-label="Mostrar senha"', false)
+                ->assertSee('aria-controls="password"', false);
+        }
+        $this->get('/cadastro')->assertSee('aria-controls="password_confirmation"', false);
+
+        $this->get('/idioma/en');
+        $this->get('/entrar')->assertSee('aria-label="Show password"', false);
+    }
+
     public function test_user_can_register_and_gets_an_empty_profile(): void
     {
         Notification::fake();
