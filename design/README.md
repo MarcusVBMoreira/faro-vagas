@@ -1,27 +1,27 @@
 # design/
 
-Material de identidade visual e design do Faro. **Esta pasta fica só no GitHub:** o deploy (`.github/workflows/ci-deploy.yml`) ignora `design/` e `docs/`, então nada daqui vai para a Hostinger.
+Faro's brand and design material. **This folder lives only on GitHub:** the deploy (`.github/workflows/ci-deploy.yml`) skips `design/` and `docs/`, so nothing here goes to Hostinger.
 
-| Pasta | Conteúdo |
+| Folder | Content |
 |---|---|
-| `logo/` | Logos em SVG (vetor, fonte da verdade) e `png/` exportados para redes sociais, LinkedIn e apresentações |
-| `identidade/` | `guia-da-marca.md` (voz, logo, cores, tipografia, formas), `tokens.json` (todas as cores, fontes, espaçamentos e raios, com tema claro e escuro) e a capa da identidade |
-| `telas/` | Capturas e modelos das telas do site, versão por versão |
-| `ferramentas/` | Scripts usados para gerar o logo e conferir contraste das cores |
+| `logo/` | SVG logos (vector, source of truth) and `png/` exports for social media, LinkedIn and presentations |
+| `identidade/` | `guia-da-marca.md` (brand guide in Portuguese: voice, logo, colors, typography, shapes), `tokens.json` (every color, font, spacing and radius, light and dark themes) and the identity cover |
+| `telas/` | Screenshots and mockups of the site, version by version |
+| `ferramentas/` | Scripts used to generate the logo and check color contrast |
 
 ## Logos
 
-| Arquivo | Uso |
+| File | Use |
 |---|---|
-| `faro-logo.svg` | Logotipo horizontal em fundo claro |
-| `faro-logo-dark.svg` | Logotipo horizontal em fundo escuro |
-| `faro-mark.svg` | Ícone (app, favicon, foto de perfil) |
-| `faro-mark-amber.svg` | Ícone inverso, para fundo azul-noite |
-| `faro-symbol.svg` | Só a luz, sem fundo |
+| `faro-logo.svg` | Horizontal logotype on light backgrounds |
+| `faro-logo-dark.svg` | Horizontal logotype on dark backgrounds |
+| `faro-mark.svg` | Icon (app, favicon, profile picture) |
+| `faro-mark-amber.svg` | Inverted icon, for night-blue backgrounds |
+| `faro-symbol.svg` | The light only, no background |
 
-As cópias usadas pelo site ficam em `public/images/`. Se o logo mudar, atualize as duas pastas.
+The copies used by the site are in `public/images/`. If the logo changes, update both folders.
 
-## Regerar o logo
+## Regenerate the logo
 
 ```bash
 cd design/ferramentas
@@ -29,10 +29,10 @@ npm install
 node gerar-logo.js ../logo
 ```
 
-## Conferir contraste de cores
+## Check color contrast
 
 ```bash
 node design/ferramentas/contraste.js "#0E1630:#FAFAF7" "#9A5B00:#FFFFFF"
 ```
 
-Texto precisa de no mínimo **4.5:1** (WCAG AA); títulos grandes, 3:1.
+Text needs at least **4.5:1** (WCAG AA); large headings, 3:1.

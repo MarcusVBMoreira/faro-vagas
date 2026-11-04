@@ -3,12 +3,16 @@
 namespace App\Services\Resume;
 
 use App\Contracts\AiClient;
+use App\Enums\ContractType;
+use App\Enums\EducationLevel;
+use App\Enums\JobLevel;
 use App\Models\User;
+use App\Support\Areas;
 use App\Support\ProfileNormalizer;
 use Illuminate\Support\Str;
 
 /**
- * Pede para a IA ler o currículo e devolve o perfil já normalizado (ver ProfileNormalizer).
+ * Pede para a IA ler o currículo (de qualquer área) e devolve o perfil já normalizado.
  */
 class ResumeAnalyzer
 {
@@ -30,21 +34,35 @@ class ResumeAnalyzer
 
     private function prompt(string $text): string
     {
+        $areas = implode(', ', Areas::keys());
+        $levels = implode(', ', array_column(JobLevel::cases(), 'value'));
+        $education = implode(', ', array_column(EducationLevel::cases(), 'value'));
+        $contracts = implode(', ', array_column(ContractType::cases(), 'value'));
+
         return <<<PROMPT
-        Você lê currículos de estudantes e profissionais de tecnologia no Brasil.
+        Você é um recrutador experiente no Brasil e lê currículos de qualquer área
+        (administração, saúde, vendas, logística, indústria, educação, tecnologia etc.).
         Extraia os dados do currículo abaixo e responda SOMENTE com JSON.
 
         Regras:
-        - nivel_desejado: "estagio" se a pessoa é estudante ou busca estágio; senão "junior", "pleno" ou "senior".
-        - semestre_atual: número do semestre que a pessoa está cursando, ou 0 se não houver.
-        - ano_conclusao: ano previsto de formatura, ou 0 se não houver.
-        - habilidades: só tecnologias, ferramentas e competências citadas no currículo. Não invente.
-        - modalidades_desejadas: use apenas "remoto", "hibrido" ou "presencial"; lista vazia se não citar.
-        - ingles: "nenhum", "basico", "intermediario", "avancado" ou "fluente".
+        - Use só o que está escrito no currículo. Não invente. Se não houver a informação, use "" ou [].
+        - cargo_desejado: o cargo que a pessoa busca (objetivo) ou, se não houver, o último cargo.
+        - area: uma destas chaves: {$areas}.
+        - nivel_desejado: uma destas chaves: {$levels}. Estudante buscando estágio = "estagio".
+        - escolaridade: maior nível de formação, uma destas chaves: {$education}.
+        - contratos: tipos que a pessoa aceita, entre: {$contracts}. Lista vazia se não citar.
+        - modalidades_desejadas: apenas "remoto", "hibrido" ou "presencial".
+        - semestre_atual e ano_conclusao: números, ou 0 se não houver.
+        - idiomas: lista de {"idioma", "nivel"} com nivel em basico, intermediario, avancado, fluente ou nativo.
+        - experiencias: empregos, estágios e trabalhos voluntários, do mais recente ao mais antigo.
+          inicio e fim no formato "AAAA-MM"; atual = true se a pessoa ainda trabalha lá.
+        - formacoes: cursos (superior, técnico, ensino médio, pós), com status cursando, concluido ou trancado.
+          inicio e fim são anos (número) ou 0.
+        - habilidades: competências e ferramentas citadas (ex.: Excel, atendimento ao cliente, empilhadeira, NR-35, vendas, PHP).
+        - cnh: categorias da carteira de motorista, como ["B"]. Lista vazia se não citar.
         - cidade: só o nome da cidade; estado: sigla com 2 letras.
-        - titulo: até 12 palavras, como "Estudante de Engenharia de Software focado em back-end".
+        - titulo: até 12 palavras, como "Assistente administrativo com experiência em faturamento".
         - resumo: 1 ou 2 frases sobre o perfil profissional, em português.
-        - Se uma informação não existir no currículo, use "" (texto vazio).
 
         CURRÍCULO:
         {$text}
@@ -55,25 +73,53 @@ class ResumeAnalyzer
     public static function schema(): array
     {
         $string = ['type' => 'string'];
+        $strings = ['type' => 'array', 'items' => $string];
 
         return [
             'type' => 'object',
             'properties' => [
                 'titulo' => $string,
                 'resumo' => $string,
-                'nivel_desejado' => ['type' => 'string', 'enum' => ['estagio', 'junior', 'pleno', 'senior', '']],
+                'cargo_desejado' => $string,
                 'area' => $string,
+                'nivel_desejado' => $string,
+                'escolaridade' => $string,
+                'contratos' => $strings,
+                'modalidades_desejadas' => $strings,
                 'cidade' => $string,
                 'estado' => $string,
+                'telefone' => $string,
+                'linkedin' => $string,
                 'semestre_atual' => ['type' => 'integer'],
                 'ano_conclusao' => ['type' => 'integer'],
-                'ingles' => ['type' => 'string', 'enum' => ['nenhum', 'basico', 'intermediario', 'avancado', 'fluente', '']],
-                'modalidades_desejadas' => ['type' => 'array', 'items' => $string],
-                'habilidades' => ['type' => 'array', 'items' => $string],
+                'idiomas' => ['type' => 'array', 'items' => [
+                    'type' => 'object',
+                    'properties' => ['idioma' => $string, 'nivel' => $string],
+                    'required' => ['idioma', 'nivel'],
+                ]],
+                'experiencias' => ['type' => 'array', 'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'cargo' => $string, 'empresa' => $string, 'cidade' => $string,
+                        'inicio' => $string, 'fim' => $string, 'atual' => ['type' => 'boolean'], 'descricao' => $string,
+                    ],
+                    'required' => ['cargo', 'empresa', 'inicio', 'fim', 'atual'],
+                ]],
+                'formacoes' => ['type' => 'array', 'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'curso' => $string, 'instituicao' => $string, 'nivel' => $string, 'status' => $string,
+                        'inicio' => ['type' => 'integer'], 'fim' => ['type' => 'integer'],
+                    ],
+                    'required' => ['curso', 'instituicao', 'status'],
+                ]],
+                'habilidades' => $strings,
+                'cnh' => $strings,
             ],
             'required' => [
-                'titulo', 'resumo', 'nivel_desejado', 'area', 'cidade', 'estado',
-                'semestre_atual', 'ano_conclusao', 'ingles', 'modalidades_desejadas', 'habilidades',
+                'titulo', 'resumo', 'cargo_desejado', 'area', 'nivel_desejado', 'escolaridade', 'contratos',
+                'modalidades_desejadas', 'cidade', 'estado', 'semestre_atual', 'ano_conclusao', 'idiomas',
+                'experiencias', 'formacoes', 'habilidades', 'cnh',
             ],
         ];
     }

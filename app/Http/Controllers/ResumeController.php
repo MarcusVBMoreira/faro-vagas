@@ -23,7 +23,7 @@ class ResumeController extends Controller
         $uploadsToday = $user->resumes()->where('created_at', '>=', now()->startOfDay())->count();
         if ($uploadsToday >= config('faro.resumes.max_uploads_per_day')) {
             throw ValidationException::withMessages([
-                'resume' => 'Você já enviou '.$uploadsToday.' currículos hoje. Tente de novo amanhã.',
+                'resume' => __('Você já enviou :count currículos hoje. Tente de novo amanhã.', ['count' => $uploadsToday]),
             ]);
         }
 
@@ -44,7 +44,7 @@ class ResumeController extends Controller
         AnalyzeResume::dispatch($resume);
 
         return redirect()->route('profile.show')
-            ->with('status', 'Currículo recebido! A IA está lendo e o seu perfil aparece aqui em instantes.');
+            ->with('status', __('Currículo recebido! A IA está lendo e o seu perfil aparece aqui em instantes.'));
     }
 
     /** Consultado pela tela de perfil enquanto a análise não termina. */

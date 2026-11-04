@@ -15,15 +15,18 @@ class ProfileFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'headline' => 'Estudante de Engenharia de Software',
-            'desired_level' => JobLevel::Estagio,
-            'area' => fake()->randomElement(['back-end', 'front-end', 'full stack', 'dados']),
+            'headline' => 'Assistente administrativo',
+            'desired_role' => 'Assistente administrativo',
+            'desired_level' => JobLevel::Assistente,
+            'area' => fake()->randomElement(\App\Support\Areas::keys()),
             'city' => 'Santo André',
             'state' => 'SP',
             'desired_modalities' => ['hibrido', 'remoto'],
             'current_semester' => fake()->numberBetween(1, 8),
             'graduation_year' => 2029,
             'english_level' => 'intermediario',
+            'languages' => [['language' => 'ingles', 'level' => 'intermediario']],
+            'open_to_work' => true,
             'digest_enabled' => true,
         ];
     }

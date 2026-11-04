@@ -1,23 +1,32 @@
 <?php
 
 /*
- * Mensagens de validação em português. Regras que não estão aqui usam o inglês do framework.
+ * Mensagens de validação em português. Regras que não estão aqui usam o inglês do framework (fallback).
  */
 return [
     'accepted' => 'Você precisa aceitar :attribute.',
+    'after_or_equal' => 'O campo :attribute deve ser uma data igual ou posterior a :date.',
     'array' => 'O campo :attribute é inválido.',
     'between' => [
         'numeric' => 'O campo :attribute deve estar entre :min e :max.',
         'string' => 'O campo :attribute deve ter entre :min e :max caracteres.',
     ],
     'boolean' => 'O campo :attribute é inválido.',
+    'current_password' => 'A senha atual está incorreta.',
     'confirmed' => 'A confirmação de :attribute não confere.',
+    'date_format' => 'O campo :attribute deve estar no formato :format.',
+    'dimensions' => 'A imagem :attribute tem dimensões inválidas.',
     'email' => 'Informe um e-mail válido.',
     'enum' => 'O valor escolhido para :attribute é inválido.',
     'file' => 'O campo :attribute precisa ser um arquivo.',
+    'gte' => [
+        'numeric' => 'O campo :attribute deve ser maior ou igual a :value.',
+    ],
+    'image' => 'O arquivo :attribute precisa ser uma imagem.',
     'in' => 'O valor escolhido para :attribute é inválido.',
     'integer' => 'O campo :attribute deve ser um número inteiro.',
     'max' => [
+        'array' => 'O campo :attribute deve ter no máximo :max itens.',
         'file' => 'O arquivo :attribute deve ter no máximo :max KB.',
         'numeric' => 'O campo :attribute deve ser no máximo :max.',
         'string' => 'O campo :attribute deve ter no máximo :max caracteres.',
@@ -35,12 +44,14 @@ return [
         'symbols' => 'A :attribute deve ter pelo menos um símbolo.',
         'uncompromised' => 'Essa :attribute apareceu em um vazamento de dados. Escolha outra.',
     ],
+    'regex' => 'O formato de :attribute é inválido.',
     'required' => 'O campo :attribute é obrigatório.',
     'size' => [
         'string' => 'O campo :attribute deve ter :size caracteres.',
     ],
     'string' => 'O campo :attribute deve ser um texto.',
     'unique' => 'Este :attribute já está em uso.',
+    'url' => 'Informe um endereço válido em :attribute, começando com https://.',
     'uploaded' => 'Não foi possível enviar :attribute. Tente de novo.',
 
     'attributes' => [
@@ -60,5 +71,30 @@ return [
         'english_level' => 'nível de inglês',
         'skills' => 'habilidades',
         'confirm_email' => 'confirmação de e-mail',
+        'current_password' => 'senha atual',
+        'desired_role' => 'cargo desejado',
+        'desired_contracts' => 'tipos de contrato',
+        'salary_expectation' => 'pretensão salarial',
+        'availability' => 'disponibilidade',
+        'phone' => 'WhatsApp / telefone',
+        'linkedin_url' => 'LinkedIn',
+        'portfolio_url' => 'portfólio',
+        'driver_license' => 'CNH',
+        'education_level' => 'escolaridade',
+        'languages' => 'idiomas',
+        'summary' => 'resumo',
+        'avatar' => 'foto',
+        'code' => 'código',
+        'role' => 'cargo',
+        'company' => 'empresa',
+        'start_month' => 'início',
+        'end_month' => 'fim',
+        'description' => 'descrição',
+        'course' => 'curso',
+        'institution' => 'instituição',
+        'level' => 'nível',
+        'status' => 'situação',
+        'start_year' => 'ano de início',
+        'end_year' => 'ano de conclusão',
     ],
 ];

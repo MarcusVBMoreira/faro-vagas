@@ -34,16 +34,18 @@ class RegisterController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => $data['password'],
+            'locale' => app()->getLocale(),
         ]);
 
         $user->profile()->create();
 
+        // O Laravel chama $user->sendEmailVerificationNotification(), que envia o código de 6 dígitos.
         event(new Registered($user));
 
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('profile.show')
-            ->with('status', 'Conta criada! Agora envie seu currículo para a IA montar seu perfil.');
+        return redirect()->route('verification.notice')
+            ->with('status', __('Conta criada! Enviamos um código de 6 dígitos para :email.', ['email' => $user->email]));
     }
 }

@@ -1,71 +1,72 @@
-# Deploy na Hostinger
+# Deploying to Hostinger
 
-Como funciona: a cada push na `main`, o GitHub Actions roda os testes. Se passarem, ele monta a versão de produção (dependências PHP + front-end compilado), envia por SSH para a Hostinger, roda as migrations e aponta o `public_html` para a pasta `public` do Laravel.
+How it works: on every push to `main`, GitHub Actions runs the tests. If they pass, it builds the production version (PHP dependencies + compiled front end), sends it over SSH to Hostinger, runs the migrations and points `public_html` at Laravel's `public` folder.
 
 ```
 ~/domains/faro.marcusmoreira.com.br/
-├── faro-app/            ← o projeto Laravel (enviado pelo rsync)
-│   ├── .env             ← gravado a partir do secret ENV_FILE
+├── faro-app/            ← the Laravel project (sent by rsync)
+│   ├── .env             ← written from the ENV_FILE secret
 │   ├── public/
-│   └── storage/
-└── public_html  →  faro-app/public   (link simbólico criado pelo deploy)
+│   │   └── storage  →  ../storage/app/public   (profile photos)
+│   └── storage/         ← never touched by rsync (logs, résumés, photos)
+└── public_html  →  faro-app/public   (symlink created by the deploy)
 ```
 
-> **Por que não usar a integração "GIT" do hPanel?** Ela só copia os arquivos do repositório para o `public_html`. O Laravel precisa de `composer install`, do front-end compilado, das migrations e de que o site sirva só a pasta `public/` (senão código e configurações ficam expostos). Por isso o deploy é feito pelo GitHub Actions.
+> **Why not use hPanel's "GIT" integration?** It only copies the repository files into `public_html`. Laravel needs `composer install`, the compiled front end, the migrations, and the site must serve only the `public/` folder (otherwise code and configuration are exposed). That's why the deploy runs on GitHub Actions.
 
-## Configuração (uma vez só)
+## One-time setup
 
-### 1. Desligar o deploy automático do hPanel
-hPanel → Sites → faro.marcusmoreira.com.br → Avançado → **GIT** → menu ⋮ → remover/desconectar o repositório. Senão ele sobrescreve o `public_html` a cada push.
+### 1. Turn off hPanel's automatic deploy
+hPanel → Websites → faro.marcusmoreira.com.br → Advanced → **GIT** → ⋮ menu → remove/disconnect the repository. Otherwise it overwrites `public_html` on every push.
 
 ### 2. PHP 8.3
-hPanel → Avançado → **Configuração de PHP** → versão **8.3** (ou mais nova).
+hPanel → Advanced → **PHP Configuration** → version **8.3** (or newer). The `gd` extension must be enabled (it is by default); it processes profile photos. `php artisan faro:diagnostico` reports it.
 
-### 3. Banco de dados
-Já criado: banco `u727297856_faro`, usuário `u727297856_root_faro`. O host é `localhost`.
+### 3. Database
+Already created: database `u727297856_faro`, user `u727297856_root_faro`. The host is `localhost`.
 
-### 4. Acesso SSH
-hPanel → Avançado → **Acesso SSH** → ativar. Anote o **IP/host**, a **porta** (normalmente `65002`) e o **usuário** (`u727297856`).
+### 4. SSH access
+hPanel → Advanced → **SSH Access** → enable. Note the **IP/host**, the **port** (usually `65002`) and the **user** (`u727297856`).
 
-### 5. Chave SSH para o GitHub
-No seu computador (PowerShell ou Git Bash):
+### 5. SSH key for GitHub
+On your computer (PowerShell or Git Bash):
 
 ```bash
 ssh-keygen -t ed25519 -C "github-deploy-faro" -f faro_deploy -N ""
 ```
 
-Isso cria dois arquivos:
-- `faro_deploy.pub` (chave **pública**): hPanel → Acesso SSH → **Chaves SSH** → Adicionar → cole o conteúdo.
-- `faro_deploy` (chave **privada**): vai no secret `SSH_KEY` abaixo. Não envie para ninguém e não coloque no repositório.
+This creates two files:
+- `faro_deploy.pub` (**public** key): hPanel → SSH Access → **SSH Keys** → Add → paste its content.
+- `faro_deploy` (**private** key): goes into the `SSH_KEY` secret below. Never send it to anyone, never commit it and never screenshot it.
 
-### 6. Secrets e variáveis do GitHub
-Repositório → **Settings → Secrets and variables → Actions**.
+### 6. GitHub secrets and variables
+Repository → **Settings → Secrets and variables → Actions**.
 
-**Secrets** (aba Secrets → New repository secret):
+**Secrets** (Secrets tab → New repository secret):
 
-| Nome | Valor |
+| Name | Value |
 |---|---|
-| `SSH_HOST` | IP/host do passo 4 |
-| `SSH_PORT` | porta do passo 4 (ex.: `65002`) |
+| `SSH_HOST` | IP/host from step 4 |
+| `SSH_PORT` | port from step 4 (e.g. `65002`) |
 | `SSH_USER` | `u727297856` |
-| `SSH_KEY` | conteúdo inteiro do arquivo `faro_deploy` (de `-----BEGIN` até `END-----`) |
+| `SSH_KEY` | the whole content of `faro_deploy` (from `-----BEGIN` to `END-----`) |
 | `DEPLOY_PATH` | `domains/faro.marcusmoreira.com.br` |
-| `ENV_FILE` | conteúdo inteiro do `.env.production` (modelo abaixo) |
+| `ENV_FILE` | the whole production `.env` (template below) |
 
-**Variables** (aba Variables → New repository variable):
+**Variables** (Variables tab → New repository variable):
 
-| Nome | Valor |
+| Name | Value |
 |---|---|
-| `DEPLOY_ENABLED` | `true` (só crie depois dos secrets: é o que liga o deploy) |
+| `DEPLOY_ENABLED` | `true` (create it only after the secrets: it's what turns the deploy on) |
 | `APP_URL` | `https://faro.marcusmoreira.com.br` |
-| `PHP_BIN` | opcional. Se `php -v` no SSH não mostrar 8.3, use `/opt/alt/php83/usr/bin/php` |
+| `PHP_BIN` | optional. If `php -v` over SSH doesn't show 8.3, use `/opt/alt/php83/usr/bin/php` |
 
-### 7. Modelo do `ENV_FILE`
+### 7. `ENV_FILE` template
 
 ```dotenv
 APP_NAME=Faro
 APP_ENV=production
-APP_KEY=base64:GERE_UMA_CHAVE
+APP_KEY=base64:GENERATE_A_KEY
 APP_DEBUG=false
 APP_URL=https://faro.marcusmoreira.com.br
 APP_TIMEZONE=America/Sao_Paulo
@@ -81,7 +82,7 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_DATABASE=u727297856_faro
 DB_USERNAME=u727297856_root_faro
-DB_PASSWORD='SENHA_DO_BANCO'
+DB_PASSWORD='DATABASE_PASSWORD'
 
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
@@ -90,43 +91,49 @@ CACHE_STORE=database
 QUEUE_CONNECTION=database
 FILESYSTEM_DISK=local
 
-# E-mail (Hostinger). Troque MAIL_MAILER=log por smtp quando colocar a senha do no-reply
-MAIL_MAILER=log
+# Email (Hostinger). Sign-up codes and 2FA depend on it, so keep MAIL_MAILER=smtp
+MAIL_MAILER=smtp
 MAIL_SCHEME=smtps
 MAIL_HOST=smtp.hostinger.com
 MAIL_PORT=465
 MAIL_USERNAME=no-reply@marcusmoreira.com.br
-MAIL_PASSWORD='SENHA_DO_EMAIL'
+MAIL_PASSWORD='EMAIL_PASSWORD'
 MAIL_FROM_ADDRESS=no-reply@marcusmoreira.com.br
 MAIL_FROM_NAME="Faro"
 
 FARO_REPO_URL=https://github.com/MarcusVBMoreira/faro-vagas
 AI_BASE_URL=https://ia.marcusmoreira.com.br
-AI_API_KEY=O_MESMO_VALOR_DO_SECRET_FARO_IA_TOKEN
+AI_API_KEY=SAME_VALUE_AS_THE_FARO_IA_TOKEN_SECRET
 AI_MODEL=qwen2.5:3b
 AI_EMBEDDING_MODEL=bge-m3
 AI_DAILY_LIMIT_PER_USER=50
 ```
 
-- Senhas com `$`, `#` ou espaço ficam entre **aspas simples**.
-- Para gerar o `APP_KEY`, rode no SSH da Hostinger: `php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"`
-- Para mudar algo do `.env` depois: edite o secret `ENV_FILE` e rode o workflow de novo (Actions → CI e Deploy → Run workflow).
+- Passwords containing `$`, `#` or spaces go in **single quotes**.
+- `APP_FALLBACK_LOCALE` must stay `en`: translation keys are the Portuguese sentences themselves, and `lang/pt_BR.json` maps each one to itself.
+- To generate `APP_KEY`, run over Hostinger SSH: `php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"`
+- To change something in `.env` later: edit the `ENV_FILE` secret and run the workflow again (Actions → CI e Deploy → Run workflow).
 
-### 8. Primeiro deploy
-Actions → **CI e Deploy** → **Run workflow** (ou faça um push na `main`). No fim, o passo "Conferir se o site respondeu" acessa `https://faro.marcusmoreira.com.br/up`.
+### 8. First deploy
+Actions → **CI e Deploy** → **Run workflow** (or push to `main`). At the end, the "Conferir se o site respondeu" step requests `https://faro.marcusmoreira.com.br/up`, and the diagnostic step prints the status of the database, AI, email, `gd` and cron (no secrets are printed).
 
-## Cron (obrigatório desde a semana 1)
-A análise do currículo roda numa fila, e na hospedagem compartilhada quem processa a fila é o agendador do Laravel.
-hPanel → Avançado → **Cron Jobs** → comando personalizado, a cada minuto:
+## Cron (required since week 1)
+Résumé analysis runs in a queue, and on shared hosting the queue is processed by Laravel's scheduler.
+hPanel → Advanced → **Cron Jobs** → custom command, every minute:
 
 ```
 /bin/bash /home/u727297856/domains/faro.marcusmoreira.com.br/faro-app/cron/schedule.sh
 ```
 
-O script `cron/schedule.sh` faz o `cd`, roda `php artisan schedule:run` e grava a saída em `storage/logs/cron.log`. O campo do hPanel não lidava bem com redirecionamentos (`>> ... 2>&1`) direto no comando.
+The `cron/schedule.sh` script does the `cd`, runs `php artisan schedule:run` and writes the output to `storage/logs/cron.log`. The hPanel field didn't handle redirections (`>> ... 2>&1`) well when typed directly in the command.
 
-## Problemas comuns
-- **`Permission denied (publickey)`**: a chave pública não foi adicionada no hPanel, ou o `SSH_KEY` não tem o conteúdo inteiro da chave privada.
-- **`rsync: command not found` no servidor**: avise, dá para trocar o envio por `tar` via SSH.
-- **Erro 500 no site**: veja `faro-app/storage/logs/` pelo Gerenciador de Arquivos. Quase sempre é `APP_KEY` vazio ou senha do banco errada no `ENV_FILE`.
-- **Página padrão da Hostinger aparecendo**: o link `public_html → faro-app/public` não foi criado. Confira o log do passo "Finalizar no servidor".
+## VPS (AI endpoint)
+The AI server is managed by versioned scripts in `ops/vps/`, run by the `vps-ops.yml` workflow when they (or `ops/vps/run.txt`) change on `main`. `04-ia-https-token.sh` configures nginx, HTTPS, the bearer token and the 600 s timeouts that long résumé analyses need.
+
+## Common problems
+- **`Permission denied (publickey)`**: the public key wasn't added in hPanel, or `SSH_KEY` doesn't hold the whole private key.
+- **`rsync: command not found` on the server**: the upload can be switched to `tar` over SSH.
+- **HTTP 500**: check `faro-app/storage/logs/` in the File Manager. It's almost always an empty `APP_KEY` or a wrong database password in `ENV_FILE`.
+- **Hostinger's default page shows up**: the `public_html → faro-app/public` link wasn't created. Check the log of the "Finalizar no servidor" step.
+- **Sign-up code never arrives**: `MAIL_MAILER` is still `log`, or the SMTP password is wrong. The diagnostic shows "SMTP alcançável" and "Senha do e-mail definida".
+- **Profile photo doesn't show**: the `public/storage` link is missing (the deploy recreates it) or `gd` is disabled.

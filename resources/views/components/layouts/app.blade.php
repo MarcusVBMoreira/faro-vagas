@@ -1,11 +1,11 @@
 @props(['title' => null])
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ? $title.' · Faro' : 'Faro · A IA que encontra as vagas certas para você' }}</title>
-    <meta name="description" content="Envie seu currículo e o Faro usa IA para encontrar as vagas de estágio e júnior mais compatíveis com você.">
+    <title>{{ $title ? $title.' · Faro' : 'Faro · '.__('A IA que encontra as vagas certas para você') }}</title>
+    <meta name="description" content="{{ __('Envie seu currículo e o Faro usa IA para encontrar as vagas mais compatíveis com você, em todas as áreas.') }}">
     <meta name="theme-color" content="#0E1630">
 
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">

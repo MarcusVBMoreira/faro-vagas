@@ -15,8 +15,8 @@ return [
         'model' => env('AI_MODEL', 'qwen2.5:3b'),
         'embedding_model' => env('AI_EMBEDDING_MODEL', 'bge-m3'),
 
-        // Em CPU o modelo 3b leva de 20 a 60 s por resposta.
-        'timeout' => (int) env('AI_TIMEOUT', 240),
+        // Em CPU (1 núcleo) o modelo 3b leva de 1 a 6 minutos para um currículo completo.
+        'timeout' => (int) env('AI_TIMEOUT', 540),
         'context_window' => (int) env('AI_CONTEXT_WINDOW', 6144),
 
         // Limite de chamadas por usuário por dia, para proteger o servidor.

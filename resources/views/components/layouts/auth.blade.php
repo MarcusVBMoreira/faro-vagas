@@ -2,10 +2,11 @@
 
 <x-layouts.app :title="$title">
     <div class="flex min-h-screen flex-col bg-surface">
-        <header class="mx-auto flex w-full max-w-6xl items-center px-6 py-6">
-            <a href="{{ route('home') }}" aria-label="Faro, página inicial">
+        <header class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
+            <a href="{{ route('home') }}" aria-label="{{ __('Faro, página inicial') }}">
                 <img src="{{ asset('images/faro-logo.svg') }}" alt="Faro" class="h-8 w-auto">
             </a>
+            <x-locale-switcher />
         </header>
 
         <main class="flex flex-1 items-start justify-center px-6 pb-16 pt-4 sm:pt-10">

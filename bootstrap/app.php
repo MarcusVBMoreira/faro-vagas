@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // usuário logado tentando abrir login/cadastro vai para o perfil.
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('profile.show'));
+
+        // Idioma do site (pt_BR, en, es)
+        $middleware->web(append: [\App\Http\Middleware\SetLocale::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

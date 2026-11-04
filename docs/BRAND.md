@@ -1,44 +1,47 @@
-# Identidade visual
+# Visual identity
 
-**Faro**: *faro* é o instinto de farejar a oportunidade certa, e lembra *farol*, a luz que mostra o caminho.
-**Tagline:** A IA que encontra as vagas certas para você.
+**Faro**: in Portuguese, *faro* is the instinct for sniffing out the right opportunity, and it echoes *farol* (lighthouse), the light that shows the way.
+**Tagline:** A IA que encontra as vagas certas para você. *(The AI that finds the right jobs for you.)*
 
 ## Logo
-Arquivos em `public/images/`:
+Files in `public/images/`:
 
-| Arquivo | Uso |
+| File | Use |
 |---|---|
-| `faro-logo.svg` | Logotipo para fundo claro |
-| `faro-logo-dark.svg` | Logotipo para fundo escuro |
-| `faro-mark.svg` | Ícone do app e favicon (`public/favicon.svg`) |
-| `faro-mark-amber.svg` | Ícone inverso, para fundo azul-noite |
-| `faro-symbol.svg` | Só a luz, sem fundo |
+| `faro-logo.svg` | Logotype on light backgrounds |
+| `faro-logo-dark.svg` | Logotype on dark backgrounds |
+| `faro-mark.svg` | App icon and favicon (`public/favicon.svg`) |
+| `faro-mark-amber.svg` | Inverted icon, for night-blue backgrounds |
+| `faro-symbol.svg` | The light only, no background |
 
-O símbolo é a lâmpada do farol (ponto âmbar) emitindo dois feixes, sobre um quadrado azul-noite. O texto "faro" é Space Grotesk Bold convertido em curvas.
+The symbol is the lighthouse lamp (an amber dot) casting two beams, on a night-blue square. The word "faro" is Space Grotesk Bold converted to outlines.
 
-## Cores
+## Colors
 
-| Token | Hex | Uso |
+| Token | Hex | Use |
 |---|---|---|
-| `noite` | `#0E1630` | Cor da marca, texto principal, fundos escuros |
-| `farol` | `#F5A524` | Botão principal (um por tela) e a luz do logo. Texto sobre ele: `noite` |
-| `farol-soft` | `#FCE9C4` | Destaque suave (badge "nova") |
-| `accent-text` | `#9A5B00` | Links e destaques em texto sobre fundo claro |
-| `sinal` | `#0F766E` | Tudo que é IA e match (nota de compatibilidade) |
-| `surface` | `#FAFAF7` | Fundo da página |
+| `noite` | `#0E1630` | Brand color, main text, dark backgrounds |
+| `farol` | `#F5A524` | Primary button (one per screen) and the logo light. Text on it: `noite` |
+| `farol-soft` | `#FCE9C4` | Soft highlight ("new" badge) |
+| `accent-text` | `#9A5B00` | Links and text highlights on light backgrounds |
+| `sinal` | `#0F766E` | Everything AI and match (compatibility score) |
+| `surface` | `#FAFAF7` | Page background |
 | `raised` | `#FFFFFF` | Cards |
-| `sunken` | `#F1F0EA` | Áreas recuadas |
-| `line` | `#E2E0D8` | Bordas |
-| `ink-muted` | `#4B5571` | Texto secundário |
-| `success` / `danger` | `#15803D` / `#B91C1C` | Estados |
+| `sunken` | `#F1F0EA` | Recessed areas |
+| `line` | `#E2E0D8` | Borders |
+| `ink-muted` | `#4B5571` | Secondary text |
+| `success` / `danger` | `#15803D` / `#B91C1C` | States |
 
-Todos os pares de texto passam no contraste WCAG AA (4.5:1). O âmbar **não** é cor de texto em fundo claro.
+Every text pair passes WCAG AA contrast (4.5:1). Amber is **never** a text color on light backgrounds.
 
-## Tipografia
-- **Space Grotesk** 600/700 para títulos (`font-display`)
-- **Inter** 400/500/600 para texto (`font-sans`)
+## Typography
+- **Space Grotesk** 600/700 for headings (`font-display`)
+- **Inter** 400/500/600 for body text (`font-sans`)
 
-## Formas
-Grade de 4px. Raios: 6px (badges), 10px (botões), 16px (cards). Ícones de traço 1.75px.
+## Shapes
+4px grid. Radii: 6px (badges), 10px (buttons), 16px (cards). Stroke icons at 1.75px.
 
-Os tokens do site estão em `resources/css/app.css`. O material completo (logos em SVG e PNG, `tokens.json`, guia da marca e capturas das telas) fica em [`design/`](../design/), pasta que não vai para a hospedagem.
+## Voice
+Plain, warm and direct, for people of every profession and education level: no jargon, short sentences, and always say *why* (why a job fits, why a field is asked for). The site speaks Portuguese, English and Spanish.
+
+The site tokens live in `resources/css/app.css`. The full material (SVG and PNG logos, `tokens.json`, brand guide and screenshots) is in [`design/`](../design/), a folder that is not deployed.

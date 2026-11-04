@@ -34,23 +34,47 @@ class ProfileTest extends TestCase
         $profile->skills()->attach(Skill::create(['name' => 'PHP']), ['source' => 'ai']);
 
         $this->actingAs($user)->put('/perfil', [
-            'headline' => 'Dev back-end em formação',
-            'desired_level' => 'junior',
-            'area' => 'back-end',
+            'headline' => 'Auxiliar de enfermagem com 3 anos de experiência',
+            'desired_role' => 'Técnica de enfermagem',
+            'desired_level' => 'tecnico',
+            'area' => 'saude',
+            'desired_contracts' => ['clt', 'temporario'],
+            'salary_expectation' => 3200,
+            'availability' => 'imediata',
+            'open_to_work' => '1',
             'city' => 'Santo André',
             'state' => 'SP',
-            'desired_modalities' => ['remoto'],
+            'phone' => '(11) 91234-5678',
+            'linkedin_url' => 'https://www.linkedin.com/in/ana',
+            'driver_license' => ['B'],
+            'desired_modalities' => ['presencial'],
+            'education_level' => 'tecnico',
             'current_semester' => 4,
             'graduation_year' => 2029,
-            'english_level' => 'avancado',
+            'languages' => [
+                ['language' => 'ingles', 'level' => 'avancado'],
+                ['language' => 'libras', 'level' => 'basico'],
+                ['language' => '', 'level' => ''],
+            ],
+            'pcd' => 'nao',
             'skills' => 'PHP, laravel, node, C#',
             'digest_enabled' => '1',
         ])->assertRedirect(route('profile.show'))->assertSessionHasNoErrors();
 
         $profile->refresh();
-        $this->assertSame(JobLevel::Junior, $profile->desired_level);
-        $this->assertSame(['remoto'], $profile->desired_modalities);
+        $this->assertSame(JobLevel::Tecnico, $profile->desired_level);
+        $this->assertSame('saude', $profile->area);
+        $this->assertSame('Técnica de enfermagem', $profile->desired_role);
+        $this->assertSame(['clt', 'temporario'], $profile->desired_contracts);
+        $this->assertSame(['presencial'], $profile->desired_modalities);
+        $this->assertSame(['B'], $profile->driver_license);
         $this->assertSame(4, $profile->current_semester);
+        $this->assertSame(\App\Enums\EducationLevel::Tecnico, $profile->education_level);
+        $this->assertSame([['language' => 'ingles', 'level' => 'avancado'], ['language' => 'libras', 'level' => 'basico']], $profile->languages);
+        $this->assertSame('avancado', $profile->english_level);
+        $this->assertTrue($profile->open_to_work);
+        $this->assertFalse($profile->is_pcd);
+        $this->assertNotNull($profile->pcd_consent_at);
 
         $skills = $profile->skills->keyBy('name');
         $this->assertEqualsCanonicalizing(['PHP', 'laravel', 'Node.js', 'C#'], $skills->keys()->all());
@@ -80,7 +104,50 @@ class ProfileTest extends TestCase
             'state' => 'ZZ',
             'desired_modalities' => ['lua'],
             'current_semester' => 40,
-        ])->assertSessionHasErrors(['desired_level', 'state', 'desired_modalities.0', 'current_semester']);
+            'area' => 'back-end',
+            'desired_contracts' => ['escravo'],
+            'linkedin_url' => 'https://example.com/ana',
+            'phone' => 'abc',
+            'languages' => [['language' => 'elfico', 'level' => 'fluente']],
+        ])->assertSessionHasErrors([
+            'desired_level', 'state', 'desired_modalities.0', 'current_semester',
+            'area', 'desired_contracts.0', 'linkedin_url', 'phone', 'languages.0.language',
+        ]);
+    }
+
+    public function test_pcd_is_only_stored_with_explicit_choice(): void
+    {
+        $user = User::factory()->create();
+        $profile = Profile::factory()->for($user)->create(['is_pcd' => true, 'pcd_consent_at' => now()]);
+
+        $this->actingAs($user)->put('/perfil', ['pcd' => ''])->assertSessionHasNoErrors();
+
+        $profile->refresh();
+        $this->assertNull($profile->is_pcd);
+        $this->assertNull($profile->pcd_consent_at);
+    }
+
+    public function test_profile_page_shows_all_sections_and_completeness(): void
+    {
+        $user = User::factory()->create();
+        Profile::factory()->for($user)->create(['area' => 'logistica']);
+
+        $this->actingAs($user)->get('/perfil')
+            ->assertOk()
+            ->assertSee('Objetivo profissional')
+            ->assertSee('Experiências')
+            ->assertSee('Formação')
+            ->assertSee('Idiomas')
+            ->assertSee('Logística, estoque e transporte')
+            ->assertSee('Verificação em duas etapas por e-mail')
+            ->assertSee('Perfil completo');
+    }
+
+    public function test_unverified_user_is_sent_to_email_verification(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $this->actingAs($user)->get('/perfil')->assertRedirect(route('verification.notice'));
     }
 
     public function test_account_deletion_requires_email_and_removes_everything(): void

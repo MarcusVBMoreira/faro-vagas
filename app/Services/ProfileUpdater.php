@@ -6,14 +6,23 @@ use App\Models\Profile;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
- * Grava no perfil o que veio da IA ou do formulário, cuidando das habilidades:
- * - habilidades da IA ficam com source = "ai" e são trocadas a cada currículo novo;
- * - habilidades adicionadas pelo usuário (source = "manual") nunca são apagadas pela IA.
+ * Grava no perfil o que veio da IA ou do formulário.
+ *
+ * Regra geral: o que a pessoa escreveu (source = "manual") nunca é apagado pela IA.
+ * A cada currículo novo, só os itens que vieram da IA (source = "ai") são trocados.
  */
 class ProfileUpdater
 {
+    private const AI_FIELDS = [
+        'headline', 'summary', 'desired_role', 'area', 'desired_level', 'city', 'state', 'phone',
+        'linkedin_url', 'education_level', 'current_semester', 'graduation_year', 'english_level',
+    ];
+
+    private const AI_LIST_FIELDS = ['desired_modalities', 'desired_contracts', 'languages', 'driver_license'];
+
     public function __construct(private SkillCatalog $catalog)
     {
     }
@@ -23,39 +32,27 @@ class ProfileUpdater
      */
     public function applyFromAi(User $user, array $data): Profile
     {
-        $profile = $user->profile()->firstOrCreate();
+        return DB::transaction(function () use ($user, $data) {
+            $profile = $user->profile()->firstOrCreate();
 
-        $fields = collect($data)
-            ->only(['headline', 'summary', 'desired_level', 'area', 'city', 'state', 'current_semester', 'graduation_year', 'english_level'])
-            ->reject(fn ($value) => $value === null)
-            ->all();
-
-        if (! empty($data['desired_modalities'])) {
-            $fields['desired_modalities'] = $data['desired_modalities'];
-        }
-
-        $profile->fill($fields)->save();
-
-        $aiSkills = $this->catalog->resolve($data['skills'] ?? []);
-        $current = $profile->skills()->get();
-
-        $sync = [];
-        foreach ($current as $skill) {
-            if ($skill->pivot->source === 'manual') {
-                $sync[$skill->id] = ['source' => 'manual', 'proficiency' => $skill->pivot->proficiency];
+            $fields = collect($data)->only(self::AI_FIELDS)->reject(fn ($value) => $value === null)->all();
+            foreach (self::AI_LIST_FIELDS as $field) {
+                if (! empty($data[$field])) {
+                    $fields[$field] = $data[$field];
+                }
             }
-        }
-        foreach ($aiSkills as $skill) {
-            $sync[$skill->id] ??= ['source' => 'ai', 'proficiency' => 1];
-        }
+            $profile->fill($fields)->save();
 
-        $profile->skills()->sync($sync);
+            $this->replaceAiItems($profile, 'experiences', $data['experiences'] ?? []);
+            $this->replaceAiItems($profile, 'educations', $data['educations'] ?? []);
+            $this->syncAiSkills($profile, $data['skills'] ?? []);
 
-        return $profile->refresh();
+            return $profile->refresh();
+        });
     }
 
     /**
-     * Lista de habilidades editada pelo usuário no formulário ("PHP, Laravel, Git").
+     * Lista de habilidades editada pelo usuário no formulário ("Excel, Vendas, Atendimento").
      * Mantém a origem das que já existiam; as novas entram como "manual".
      */
     public function syncSkillsFromForm(Profile $profile, string $commaSeparated): void
@@ -73,6 +70,38 @@ class ProfileUpdater
                 'source' => $existing?->pivot->source ?? 'manual',
                 'proficiency' => $existing?->pivot->proficiency ?? 1,
             ];
+        }
+
+        $profile->skills()->sync($sync);
+    }
+
+    /** @param  list<array<string, mixed>>  $items */
+    private function replaceAiItems(Profile $profile, string $relation, array $items): void
+    {
+        if ($items === []) {
+            return; // a IA não achou nada: mantém o que existe
+        }
+
+        $profile->{$relation}()->where('source', 'ai')->delete();
+
+        foreach ($items as $item) {
+            $profile->{$relation}()->create([...$item, 'source' => 'ai']);
+        }
+    }
+
+    /** @param  list<string>  $names */
+    private function syncAiSkills(Profile $profile, array $names): void
+    {
+        $aiSkills = $this->catalog->resolve($names);
+
+        $sync = [];
+        foreach ($profile->skills()->get() as $skill) {
+            if ($skill->pivot->source === 'manual') {
+                $sync[$skill->id] = ['source' => 'manual', 'proficiency' => $skill->pivot->proficiency];
+            }
+        }
+        foreach ($aiSkills as $skill) {
+            $sync[$skill->id] ??= ['source' => 'ai', 'proficiency' => 1];
         }
 
         $profile->skills()->sync($sync);

@@ -40,10 +40,10 @@ class Resume extends Model
     public function statusLabel(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING => 'Na fila para análise',
-            self::STATUS_PROCESSING => 'A IA está lendo seu currículo',
-            self::STATUS_DONE => 'Analisado',
-            self::STATUS_FAILED => 'Não foi possível analisar',
+            self::STATUS_PENDING => __('Na fila para análise'),
+            self::STATUS_PROCESSING => __('A IA está lendo seu currículo'),
+            self::STATUS_DONE => __('Analisado'),
+            self::STATUS_FAILED => __('Não foi possível analisar'),
             default => $this->status,
         };
     }

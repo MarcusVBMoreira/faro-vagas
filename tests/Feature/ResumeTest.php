@@ -146,6 +146,7 @@ class ResumeTest extends TestCase
         $this->assertSame(['hibrido', 'remoto'], $profile->desired_modalities);
         $this->assertEqualsCanonicalizing(['PHP', 'JavaScript', 'MySQL', 'Git'], $profile->skills->pluck('name')->all());
         $this->assertTrue($profile->skills->every(fn ($s) => $s->pivot->source === 'ai'));
+        $this->assertSame('tecnologia', $profile->area);
 
         // O pedido levou o token e foi registrado para controle de uso.
         Http::assertSent(fn ($request) => $request->hasHeader('Authorization', 'Bearer token-de-teste')
@@ -221,6 +222,67 @@ class ResumeTest extends TestCase
         $this->actingAs($user)->post('/perfil/curriculo', [
             'resume' => UploadedFile::fake()->create('cv3.pdf', 100, 'application/pdf'),
         ])->assertSessionHasErrors('resume');
+    }
+
+    public function test_analysis_of_a_non_tech_resume_fills_experiences_and_education(): void
+    {
+        $this->fakeExtractor("Maria Lima - Diadema/SP\nAuxiliar de logística\nEmpilhadeira, NR-11, controle de estoque");
+        $this->fakeAi($this->aiAnswer([
+            'titulo' => 'Auxiliar de logística com experiência em estoque',
+            'cargo_desejado' => 'Conferente',
+            'area' => 'Logística',
+            'nivel_desejado' => 'Operacional',
+            'escolaridade' => 'Ensino médio completo',
+            'contratos' => ['CLT', 'temporário'],
+            'telefone' => '+55 11 91234-5678',
+            'linkedin' => '',
+            'cidade' => 'Diadema - SP',
+            'semestre_atual' => 0,
+            'ano_conclusao' => 2015,
+            'ingles' => '',
+            'idiomas' => [['idioma' => 'Espanhol', 'nivel' => 'básico']],
+            'cnh' => ['Categoria AB'],
+            'modalidades_desejadas' => ['presencial'],
+            'habilidades' => ['Empilhadeira', 'Controle de estoque'],
+            'experiencias' => [
+                ['cargo' => 'Auxiliar de logística', 'empresa' => 'Atacado Bom Preço', 'cidade' => 'Diadema', 'inicio' => '03/2019', 'fim' => 'atual', 'descricao' => 'Separação e conferência de pedidos.'],
+                ['cargo' => 'Repositor', 'empresa' => 'Mercado Central', 'inicio' => '2016-02', 'fim' => '2019-01'],
+                ['empresa' => 'sem cargo, deve ser ignorada'],
+            ],
+            'formacoes' => [
+                ['curso' => 'Ensino médio', 'instituicao' => 'E.E. Prof. João', 'nivel' => 'médio', 'status' => 'concluído', 'inicio' => 2012, 'fim' => 2015],
+            ],
+        ]));
+        $user = User::factory()->create();
+        $profile = Profile::factory()->for($user)->create();
+        $profile->experiences()->create(['role' => 'Manual, deve ficar', 'source' => 'manual']);
+        $profile->experiences()->create(['role' => 'IA antiga, deve sair', 'source' => 'ai']);
+
+        $this->actingAs($user)->post('/perfil/curriculo', [
+            'resume' => UploadedFile::fake()->create('cv.pdf', 100, 'application/pdf'),
+        ]);
+
+        $profile->refresh();
+        $this->assertSame('logistica', $profile->area);
+        $this->assertSame('Conferente', $profile->desired_role);
+        $this->assertSame(JobLevel::Operacional, $profile->desired_level);
+        $this->assertSame(\App\Enums\EducationLevel::Medio, $profile->education_level);
+        $this->assertSame(['clt', 'temporario'], $profile->desired_contracts);
+        $this->assertSame('(11) 91234-5678', $profile->phone);
+        $this->assertSame(['A', 'B'], $profile->driver_license);
+        $this->assertSame(['Diadema', 'SP'], [$profile->city, $profile->state]);
+        $this->assertSame([['language' => 'espanhol', 'level' => 'basico']], $profile->languages);
+
+        $roles = $profile->experiences()->reorder('id')->pluck('role')->all();
+        $this->assertSame(['Manual, deve ficar', 'Auxiliar de logística', 'Repositor'], $roles);
+        $current = $profile->experiences()->where('role', 'Auxiliar de logística')->first();
+        $this->assertTrue($current->is_current);
+        $this->assertSame('2019-03-01', $current->start_date->format('Y-m-d'));
+        $this->assertNull($current->end_date);
+
+        $education = $profile->educations()->first();
+        $this->assertSame('concluido', $education->status);
+        $this->assertSame(2015, $education->end_year);
     }
 
     public function test_status_endpoint(): void

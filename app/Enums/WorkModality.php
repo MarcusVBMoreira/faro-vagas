@@ -10,10 +10,10 @@ enum WorkModality: string
 
     public function label(): string
     {
-        return match ($this) {
+        return __(match ($this) {
             self::Remoto => 'Remoto',
             self::Hibrido => 'Híbrido',
             self::Presencial => 'Presencial',
-        };
+        });
     }
 }

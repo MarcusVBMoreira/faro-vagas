@@ -17,17 +17,20 @@
 
 ---
 
-**Faro** helps students and early-career developers in Brazil find internship and junior tech jobs. You upload your résumé, an AI builds your profile, and Faro ranks job openings by how well they fit you, showing a **match score**, your **strengths** and the **skills you're missing** for each one.
+**Faro** helps people in Brazil find jobs in **any profession**: apprentices and interns, nurses, salespeople, warehouse staff, cooks, teachers, technicians, developers and managers. You upload your résumé, an AI builds your profile, and Faro ranks job openings by how well they fit you, showing a **match score**, your **strengths** and **what's missing** for each one.
 
-The product is in Brazilian Portuguese (it targets the Brazilian job market); the code and this documentation are in English and Portuguese.
+The site is available in **Portuguese, English and Spanish** (it targets the Brazilian job market, so Portuguese is the default). The code comments are in Portuguese; this documentation is in English.
 
 > 🚧 Portfolio project, built in public. Follow the progress on the [roadmap](docs/ROADMAP.md).
 
 ## Features
 
-- [x] Sign up, login with brute-force throttling, password reset by email
+- [x] Sign up with **email verification by 6-digit code**, optional **two-step login** by email, brute-force throttling, password reset
+- [x] Site in **Portuguese, English and Spanish** (switcher, browser detection, saved per account, emails in the user's language)
 - [x] Résumé upload (PDF) with text extraction and AI parsing in a background queue
-- [x] "My profile" page: review and fix what the AI extracted (skills, level, city, work mode...)
+- [x] Profile for **every profession**: 28 fields, 14 career levels (apprentice to director), contract types, salary expectation, education level, work history, education, languages, driver's license, contact
+- [x] Optional profile photo (cropped to 400×400 JPEG, EXIF/GPS stripped) and a profile completeness meter
+- [x] Optional, consent-based disability (PcD) field for affirmative openings, never used in scoring
 - [x] Account deletion that wipes all user data and files (LGPD, Brazil's GDPR)
 - [ ] Daily job collection from public sources *(week 2)*
 - [ ] Job matching with embeddings + score *(week 3)*
@@ -53,15 +56,15 @@ Before choosing the models, I benchmarked them on the VPS (1 vCPU, 4 GB RAM, no 
 | Parsing résumés and job postings into JSON | `qwen2.5:3b` on the VPS, in a queue (~25–40 s) | Got every field right in the benchmark; the 1.5b model mislabeled the seniority level |
 | Match score, strengths and missing skills | **Plain PHP** (skill list comparison + similarity) | Must be exact: in the benchmark, small models invented missing skills |
 
-What small models still get wrong ("3º semestre" instead of `3`, `"Mauá/SP"` as a city, accented enum values) is fixed deterministically in [`ProfileNormalizer`](app/Support/ProfileNormalizer.php), and the response is constrained with a JSON Schema.
+What small models still get wrong ("3º semestre" instead of `3`, `"Mauá/SP"` as a city, "Enfermagem" instead of the `saude` field key, "+55 11 9..." phone formats, "atual" as an end date) is fixed deterministically in [`ProfileNormalizer`](app/Support/ProfileNormalizer.php), and the response is constrained with a JSON Schema.
 
 ## How matching works *(weeks 2–3)*
 
 Sending every job posting to an LLM would be slow and expensive, so Faro uses a three-step funnel:
 
-1. **SQL filters**: level, work mode, location and semester discard most postings at no cost.
+1. **SQL filters**: field, level, contract, work mode, location and education discard most postings at no cost.
 2. **Semantic similarity**: the profile and each posting become embeddings; the ~20 closest postings move on.
-3. **Score in code**: required vs. nice-to-have skills the candidate has, plus similarity, produce the score, strengths and gaps, with no hallucinations.
+3. **Score in code**: required vs. nice-to-have skills the candidate has, plus similarity, produce the score, strengths and gaps, with no hallucinations. Sensitive data (disability) is never part of the score.
 
 ## Tech stack
 
@@ -98,6 +101,9 @@ app/Contracts/AiClient.php     AI provider interface (Ollama today, swappable)
 app/Services/Ai/               Ollama client: token, timeouts, usage log, daily limit
 app/Services/Resume/           PDF text extraction and résumé analysis
 app/Support/ProfileNormalizer  fixes and normalizes the model's JSON
+app/Support/Areas.php          the 28 professional fields (keys stored, labels translated)
+app/Services/Auth/             6-digit email codes (sign-up verification and 2FA)
+lang/                          pt_BR, en and es (JSON keys are the Portuguese sentences)
 app/Services/SkillCatalog      "js" → JavaScript, "C#" → c-sharp: one skill vocabulary
 app/Jobs/AnalyzeResume         background job: PDF → AI → profile
 database/                      migrations, seeders and factories

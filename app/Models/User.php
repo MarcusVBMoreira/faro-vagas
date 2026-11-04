@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Services\Auth\EmailCodeService;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -24,7 +27,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'locale',
+        'two_factor_email',
     ];
+
+    public const LOCALES = ['pt_BR' => 'Português', 'en' => 'English', 'es' => 'Español'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -46,7 +53,42 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_email' => 'boolean',
         ];
+    }
+
+    /** E-mails e notificações saem no idioma escolhido pela pessoa. */
+    public function preferredLocale(): string
+    {
+        return $this->locale ?: config('app.locale');
+    }
+
+    /**
+     * A confirmação do cadastro é por código de 6 dígitos (não por link).
+     * O Laravel chama este método ao disparar o evento Registered.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        app(EmailCodeService::class)->send($this, EmailCodeService::VERIFY_EMAIL);
+    }
+
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null;
+    }
+
+    public function initials(): string
+    {
+        $parts = preg_split('/\s+/u', trim($this->name)) ?: [];
+        $first = mb_substr($parts[0] ?? '?', 0, 1);
+        $last = count($parts) > 1 ? mb_substr(end($parts), 0, 1) : '';
+
+        return mb_strtoupper($first.$last);
+    }
+
+    public function verificationCodes(): HasMany
+    {
+        return $this->hasMany(VerificationCode::class);
     }
 
     public function profile(): HasOne

@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Schedule;
  * (ver docs/DEPLOY.md), e é ele que processa a fila: não há worker rodando o tempo todo
  * na hospedagem compartilhada.
  */
-Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=2 --timeout=280')
+Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=2 --timeout=600')
     ->everyMinute()
-    ->withoutOverlapping(10)
+    ->withoutOverlapping(15)
     ->name('fila');
 
 // Batimento do cron: o faro:diagnostico mostra há quanto tempo o agendador rodou pela última vez.
@@ -36,6 +36,7 @@ Artisan::command('faro:diagnostico', function () {
     $this->line('Banco de dados ............. '.$ok($db));
 
     $this->line('APP_KEY definida ........... '.$ok(filled(config('app.key'))));
+    $this->line('Extensão GD (fotos) ........ '.$ok(extension_loaded('gd')));
     $this->line('Token da IA definido ....... '.$ok(filled(config('faro.ai.api_key'))));
 
     try {

@@ -22,6 +22,8 @@ class AuthTest extends TestCase
 
     public function test_user_can_register_and_gets_an_empty_profile(): void
     {
+        Notification::fake();
+
         $response = $this->post('/cadastro', [
             'name' => 'Ana Souza',
             'email' => 'Ana@Exemplo.com ',
@@ -30,12 +32,15 @@ class AuthTest extends TestCase
             'terms' => '1',
         ]);
 
-        $response->assertRedirect(route('profile.show'));
+        $response->assertRedirect(route('verification.notice'));
         $this->assertAuthenticated();
 
         $user = User::first();
         $this->assertSame('ana@exemplo.com', $user->email);
+        $this->assertSame('pt_BR', $user->locale);
         $this->assertNotNull($user->profile);
+        $this->assertFalse($user->hasVerifiedEmail());
+        Notification::assertSentToTimes($user, \App\Notifications\EmailCodeNotification::class, 1);
     }
 
     public function test_register_requires_terms_and_strong_password(): void

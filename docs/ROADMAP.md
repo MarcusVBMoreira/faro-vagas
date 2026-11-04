@@ -1,53 +1,69 @@
 # Roadmap
 
-Regra do projeto: **toda etapa termina no ar**. Cada push na `main` roda os testes e, se passarem, publica em https://faro.marcusmoreira.com.br.
+Project rule: **every step ends up live**. Each push to `main` runs the tests and, if they pass, deploys to https://faro.marcusmoreira.com.br.
 
-## Etapa 0 · Fundação ✅
-- [x] Nome, logo, paleta e tipografia (docs/BRAND.md)
-- [x] Projeto Laravel 12 em português (locale `pt_BR`, fuso de São Paulo)
-- [x] Modelagem completa do banco: migrations, models, enums e seeders (docs/DATABASE.md)
-- [x] Página inicial com a identidade visual
-- [x] Testes automáticos (PHPUnit) rodando em MySQL 8 no GitHub Actions
-- [x] Deploy automático na Hostinger via SSH (docs/DEPLOY.md)
-- [x] Configurar os secrets e fazer o primeiro deploy
-- [x] Benchmark de IA local no VPS e publicação em `ia.marcusmoreira.com.br` (HTTPS + token)
+## Step 0 · Foundation ✅
+- [x] Name, logo, color palette and typography ([BRAND.md](BRAND.md))
+- [x] Laravel 12 project set up for Brazil (`pt_BR` locale, São Paulo time zone)
+- [x] Full database model: migrations, models, enums and seeders ([DATABASE.md](DATABASE.md))
+- [x] Home page with the visual identity
+- [x] Automated tests (PHPUnit) running on MySQL 8 in GitHub Actions
+- [x] Automatic deploy to Hostinger over SSH ([DEPLOY.md](DEPLOY.md))
+- [x] Configure the secrets and run the first deploy
+- [x] Local AI benchmark on the VPS and endpoint published at `ia.marcusmoreira.com.br` (HTTPS + token)
 
-## Semana 1 · Contas e perfil com IA ✅
-- [x] Cadastro, login (com limite de tentativas), logout e redefinição de senha, tudo em pt-BR
-- [x] E-mails de redefinição pelo SMTP da Hostinger (`no-reply@marcusmoreira.com.br`)
-- [x] Upload do currículo em PDF (até 5 MB, 5 por dia) e extração do texto (`smalot/pdfparser`)
-- [x] IA própria no VPS (Ollama + `qwen2.5:3b`) com cliente no Laravel, token, log de uso e limite diário
-- [x] A IA lê o currículo e devolve JSON (com JSON Schema), corrigido pelo `ProfileNormalizer`
-- [x] Tela "Meu perfil": revisar habilidades, nível, cidade e modalidade; status da análise ao vivo
-- [x] Política de privacidade e exclusão de conta com todos os dados (LGPD)
-- **Entregável:** envio meu currículo e vejo meu perfil montado.
+## Week 1 · Accounts and AI profile ✅
+- [x] Sign up, login (with attempt throttling), logout and password reset
+- [x] Reset emails through Hostinger SMTP (`no-reply@marcusmoreira.com.br`)
+- [x] PDF résumé upload (up to 5 MB, 5 per day) and text extraction (`smalot/pdfparser`)
+- [x] Self-hosted AI on the VPS (Ollama + `qwen2.5:3b`) with a Laravel client, token, usage log and daily limit
+- [x] The AI reads the résumé and returns JSON (constrained by a JSON Schema), fixed by `ProfileNormalizer`
+- [x] "My profile" page: review skills, level, city and work mode; live analysis status
+- [x] Privacy policy and account deletion that erases all data (LGPD)
+- **Deliverable:** I upload my résumé and see my profile built.
 
-## Semana 2 · Coleta de vagas
-- [ ] Interface `JobSourceConnector` e o conector de issues do GitHub
-- [ ] Comando `faro:fetch-jobs` agendado 1x por dia
-- [ ] A IA estrutura cada vaga (nível, modalidade, cidade, tecnologias) em fila
-- [ ] Página de vagas com busca e filtros
-- [ ] Adicionar vaga manualmente (colar link ou texto)
-- **Entregável:** o banco se enche de vagas sozinho.
+## Week 1.5 · Every profession, safer accounts, three languages ✅
+Feedback after the first real test: the product looked like a tech-only job board. Acting as an HR director, the profile was redesigned using the categories of the big Brazilian job sites (Catho, InfoJobs, Gupy, Vagas.com) as a reference.
+- [x] **28 professional fields** (administration, sales, healthcare, logistics, manufacturing, education, food service, construction, IT...)
+- [x] **14 career levels**, from apprentice and intern to entry-level, technician, mid, senior, supervisor, manager and director
+- [x] Contract types (CLT, PJ, internship, apprentice, temporary, freelance), salary expectation, start availability, "open to work"
+- [x] Education level (elementary school to doctorate), work history and education entries, languages with level, driver's license (CNH), willingness to travel or relocate, WhatsApp and LinkedIn
+- [x] Optional, consent-based disability (PcD) field, used only to show affirmative openings and **never** in the match score
+- [x] Profile completeness meter
+- [x] The AI prompt and schema cover every field and extract experiences and education; `ProfileNormalizer` maps free text to the fixed lists
+- [x] Skill catalog seeded for every field (Excel, customer service, forklift, NR-35, SAP, TOTVS, AutoCAD, Libras...)
+- [x] **Email verification with a 6-digit code** at sign-up (HMAC-hashed, 15 min, 5 attempts, single use)
+- [x] **Optional two-step login** by email code
+- [x] **Optional profile photo** (center-cropped to 400×400 JPEG, which also strips EXIF/GPS data)
+- [x] **Portuguese, English and Spanish**: language switcher, browser detection, saved per account; emails go out in the user's language
+- [x] Security settings: change password, toggle 2FA
 
-## Semana 3 · Match com IA
-- [ ] Embeddings do perfil e das vagas
-- [ ] `MatchService`: filtros SQL, similaridade em PHP, top 20
-- [ ] A IA avalia as 20 melhores: nota, pontos fortes, lacunas e explicação
-- [ ] Tela "Vagas para você" com os cards de match
-- [ ] Feedback "boa vaga / não tem a ver"
-- **Entregável:** o coração do projeto funcionando.
+## Week 2 · Job collection
+- [ ] `JobSourceConnector` interface and the first connectors, **covering every field** (not only GitHub tech boards)
+- [ ] `faro:fetch-jobs` command scheduled once a day
+- [ ] The AI structures each posting (field, level, contract, work mode, city, requirements) in the queue
+- [ ] Jobs page with search and filters
+- [ ] Add a job manually (paste a link or text)
+- **Deliverable:** the database fills itself with job postings.
 
-## Semana 4 · Produto e acabamento
-- [ ] Kanban de candidaturas (SortableJS)
-- [ ] Resumo diário por e-mail com as melhores vagas novas
-- [ ] Limite de uso de IA por usuário e tratamento de falhas da IA
-- [ ] Dashboard: candidaturas por etapa, tecnologias mais pedidas
-- [ ] README final com GIF e diagrama do funil de match
-- **Entregável:** projeto pronto para o portfólio.
+## Week 3 · AI matching
+- [ ] Profile and posting embeddings
+- [ ] `MatchService`: SQL filters, similarity in PHP, top 20
+- [ ] Score, strengths, gaps and explanation for the top 20
+- [ ] "Jobs for you" page with the match cards
+- [ ] "Good fit / not for me" feedback
+- **Deliverable:** the heart of the project working.
 
-## Depois do primeiro mês
-- Plano de estudos a partir das lacunas mais frequentes
-- Carta de apresentação gerada para cada vaga
-- Tema escuro
-- Migrar para a VPS (fila sempre ativa, busca vetorial nativa) e documentar a migração
+## Week 4 · Product and polish
+- [ ] Application Kanban board (SortableJS)
+- [ ] Daily email digest with the best new jobs
+- [ ] Faster résumé analysis on the VPS (smaller prompt, streaming, model tuning)
+- [ ] Dashboard: applications per stage, most requested skills
+- [ ] Final README with a GIF and a diagram of the match funnel
+- **Deliverable:** portfolio-ready project.
+
+## After the first month
+- Study plan based on the most frequent gaps
+- Cover letter generated for each job
+- Dark theme
+- Move to the VPS (always-on queue, native vector search) and document the migration
