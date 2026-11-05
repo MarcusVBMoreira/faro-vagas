@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\Http;
  * gratuita, pedida pelo formulário em jooble.org/api/about. A descrição vem resumida
  * e o link passa pelo Jooble antes de chegar ao anúncio original.
  *
- * config da fonte: {"location": "São Paulo", "keywords": ["", "home office"], "pages": 3}
+ * A chave do Jooble vale para UM país: a do Brasil é pedida em br.jooble.org/api/about
+ * (uma chave dos EUA responde 403 em br.jooble.org e 0 vagas para São Paulo em jooble.org).
+ *
+ * config da fonte: {"domain": "br.jooble.org", "location": "São Paulo", "keywords": ["", "home office"], "pages": 3}
  */
 class JoobleConnector implements JobSourceConnector
 {
@@ -31,7 +34,7 @@ class JoobleConnector implements JobSourceConnector
         foreach ($config['keywords'] ?? [''] as $keywords) {
             for ($page = 1; $page <= (int) ($config['pages'] ?? 3); $page++) {
                 $response = Http::timeout(30)->retry(2, 2000, throw: false)->acceptJson()
-                    ->post('https://jooble.org/api/'.config('faro.jobs.jooble.api_key'), [
+                    ->post('https://'.($config['domain'] ?? 'br.jooble.org').'/api/'.config('faro.jobs.jooble.api_key'), [
                         'keywords' => $keywords,
                         'location' => $config['location'] ?? 'São Paulo',
                         'page' => (string) $page,

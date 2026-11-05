@@ -20,7 +20,7 @@ class JobSourceSeeder extends Seeder
             ['name' => 'Adzuna Brasil', 'slug' => 'adzuna-br', 'type' => JobSourceType::Adzuna,
                 'config' => ['country' => 'br', 'where' => 'São Paulo', 'queries' => ['', 'remoto', 'home office'], 'pages' => 4, 'max_days_old' => 7]],
             ['name' => 'Jooble Brasil', 'slug' => 'jooble-br', 'type' => JobSourceType::Jooble,
-                'config' => ['location' => 'São Paulo', 'keywords' => ['', 'home office'], 'pages' => 3]],
+                'config' => ['domain' => 'br.jooble.org', 'location' => 'São Paulo', 'keywords' => ['', 'home office'], 'pages' => 3]],
             ['name' => 'Remotive (remotas internacionais)', 'slug' => 'remotive', 'type' => JobSourceType::Remotive, 'config' => ['limit' => 300]],
             ['name' => 'Back-end Brasil (GitHub)', 'slug' => 'backend-br', 'type' => JobSourceType::GithubIssues, 'config' => ['repo' => 'backend-br/vagas']],
             ['name' => 'Front-end Brasil (GitHub)', 'slug' => 'frontendbr', 'type' => JobSourceType::GithubIssues, 'config' => ['repo' => 'frontendbr/vagas']],
