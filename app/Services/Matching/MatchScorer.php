@@ -15,8 +15,9 @@ use App\Models\Profile;
  *   Nível .............. 10
  *   Modelo e contrato ..  5
  *
- * Peso de um item sem informação (vaga sem habilidades, sem nível...) não some:
- * é redistribuído entre os itens conhecidos, para a nota não punir vaga mal descrita.
+ * Item sem informação (vaga sem habilidades, sem nível, ainda sem embedding...) vale 40% do
+ * seu peso: não zera a vaga mal descrita, mas também não deixa uma vaga quase vazia chegar
+ * ao topo só porque o pouco que se sabe dela bate com o perfil.
  * Escolaridade abaixo da pedida tira 10 pontos. Dado de PcD nunca entra na conta.
  */
 final class MatchScorer
@@ -27,6 +28,9 @@ final class MatchScorer
     private const SIM_MIN = 0.35;
 
     private const SIM_MAX = 0.80;
+
+    /** Crédito de um item desconhecido (fração do peso). */
+    public const UNKNOWN_CREDIT = 0.4;
 
     /**
      * @param  array<int, true>  $profileSkillIds
@@ -112,17 +116,10 @@ final class MatchScorer
         }
         $parts['logistics'] = $logistics ? array_sum($logistics) / count($logistics) : null;
 
-        // Soma ponderada, redistribuindo o peso do que é desconhecido
-        $known = array_filter($parts, fn ($v) => $v !== null);
-        if ($known === []) {
-            $score = 50.0;
-        } else {
-            $weightKnown = array_sum(array_intersect_key(self::WEIGHTS, $known));
-            $score = 0.0;
-            foreach ($known as $name => $fraction) {
-                $score += $fraction * self::WEIGHTS[$name];
-            }
-            $score = $score / $weightKnown * 100;
+        // Soma ponderada (pesos somam 100); desconhecido vale UNKNOWN_CREDIT
+        $score = 0.0;
+        foreach (self::WEIGHTS as $name => $weight) {
+            $score += ($parts[$name] ?? self::UNKNOWN_CREDIT) * $weight;
         }
 
         // Escolaridade abaixo da pedida

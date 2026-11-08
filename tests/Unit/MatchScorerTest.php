@@ -75,13 +75,13 @@ class MatchScorerTest extends TestCase
         $this->assertContains(['k' => 'contract', 'v' => 'pj'], $r['gaps']);
     }
 
-    public function test_unknown_information_does_not_punish(): void
+    public function test_sparse_jobs_get_partial_credit_but_do_not_reach_the_top(): void
     {
-        // Vaga só com área (sem habilidades, nível, modalidade): a nota vem só do que se sabe
+        // Vaga só com área: 15 pela área + 40% dos outros 85 pontos
         $job = $this->job(['area' => 'administracao']);
 
-        $this->assertSame(100, (new MatchScorer)->score($this->profile(), [], $job, null)['score']);
-        $this->assertSame(50, (new MatchScorer)->score(new Profile, [], $this->job([]), null)['score']);
+        $this->assertSame(49, (new MatchScorer)->score($this->profile(), [], $job, null)['score']);
+        $this->assertSame(40, (new MatchScorer)->score(new Profile, [], $this->job([]), null)['score']);
     }
 
     public function test_education_below_requirement_costs_points(): void
