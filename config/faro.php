@@ -53,5 +53,7 @@ return [
     'matching' => [
         // Quantas vagas passam da busca por similaridade para a nota final.
         'candidates' => (int) env('MATCH_CANDIDATES', 20),
+        // Quantos matches ficam guardados por pessoa (a página mostra os 20 melhores)
+        'keep' => (int) env('MATCH_KEEP', 50),
     ],
 ];

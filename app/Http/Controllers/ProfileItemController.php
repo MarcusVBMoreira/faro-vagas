@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ComputeMatches;
 use App\Enums\EducationLevel;
 use App\Models\Education;
 use App\Models\Experience;
@@ -39,6 +40,8 @@ class ProfileItemController extends Controller
             'source' => 'manual',
         ]);
 
+        ComputeMatches::dispatch($request->user());
+
         return redirect()->to(route('profile.show').'#experiencias')->with('status', __('Experiência adicionada.'));
     }
 
@@ -46,6 +49,8 @@ class ProfileItemController extends Controller
     {
         abort_unless($experience->profile_id === $this->profile($request)->id, 404);
         $experience->delete();
+
+        ComputeMatches::dispatch($request->user());
 
         return redirect()->to(route('profile.show').'#experiencias')->with('status', __('Experiência removida.'));
     }
@@ -63,6 +68,8 @@ class ProfileItemController extends Controller
 
         $this->profile($request)->educations()->create([...$data, 'source' => 'manual']);
 
+        ComputeMatches::dispatch($request->user());
+
         return redirect()->to(route('profile.show').'#formacao')->with('status', __('Formação adicionada.'));
     }
 
@@ -70,6 +77,8 @@ class ProfileItemController extends Controller
     {
         abort_unless($education->profile_id === $this->profile($request)->id, 404);
         $education->delete();
+
+        ComputeMatches::dispatch($request->user());
 
         return redirect()->to(route('profile.show').'#formacao')->with('status', __('Formação removida.'));
     }

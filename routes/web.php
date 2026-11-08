@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\JobPostingController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\MatchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProfileItemController;
 use App\Http\Controllers\ResumeController;
@@ -58,6 +59,10 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/perfil/curriculo', [ResumeController::class, 'store'])->middleware('throttle:10,1')->name('resume.store');
         Route::get('/perfil/curriculo/status', [ResumeController::class, 'status'])->name('resume.status');
+
+        Route::get('/para-voce', [MatchController::class, 'index'])->name('matches.index');
+        Route::post('/para-voce/recalcular', [MatchController::class, 'refresh'])->middleware('throttle:6,1')->name('matches.refresh');
+        Route::post('/para-voce/{match}/avaliar', [MatchController::class, 'feedback'])->whereNumber('match')->name('matches.feedback');
 
         Route::get('/vagas', [JobPostingController::class, 'index'])->name('jobs.index');
         Route::get('/vagas/nova', [JobPostingController::class, 'create'])->name('jobs.create');

@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Resume;
 use App\Services\Ai\AiException;
 use App\Services\ProfileUpdater;
+use App\Jobs\ComputeMatches;
 use App\Services\Resume\PdfTextExtractor;
 use App\Services\Resume\ResumeAnalyzer;
 use App\Services\Resume\UnreadablePdfException;
@@ -51,6 +52,7 @@ class AnalyzeResume implements ShouldQueue
 
             $data = $analyzer->analyze($resume->extracted_text, $resume->user);
             $updater->applyFromAi($resume->user, $data);
+            ComputeMatches::dispatch($resume->user);
         } catch (UnreadablePdfException $e) {
             $this->markFailed($resume, __('Não conseguimos ler o texto desse PDF. Se ele é uma imagem escaneada, exporte o currículo do Word ou do Google Docs como PDF e envie de novo.', [], 'pt_BR'));
 

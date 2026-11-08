@@ -55,11 +55,13 @@ Scope decision: **Greater São Paulo (39 cities) + remote jobs**, every field. `
 - **Deliverable:** the database fills itself with job postings.
 
 ## Week 3 · AI matching
-- [ ] Profile and posting embeddings
-- [ ] `MatchService`: SQL filters, similarity in PHP, top 20
-- [ ] Score, strengths, gaps and explanation for the top 20
-- [ ] "Jobs for you" page with the match cards
-- [ ] "Good fit / not for me" feedback
+- [x] Profile and posting embeddings (`bge-m3` on the VPS); postings embedded in batches every 15 minutes, the profile only when its text changes
+- [x] `MatchService`: SQL filters (active, visible, international only if opted in), cosine similarity in PHP, best 50 stored
+- [x] `MatchScorer`, a score computed in code: required/nice-to-have skills 40, AI similarity 30, field 15, level 10, work model and contract 5; unknown items have their weight redistributed; education below the requirement costs 10; disability data is never read
+- [x] Strengths and gaps per job, translated at display time
+- [x] "Jobs for you" page and the score on the job page
+- [x] "Good match / not for me" feedback (hidden jobs stay hidden after recalculation)
+- [x] Recalculated when the profile changes and every hour
 - **Deliverable:** the heart of the project working.
 
 ## Week 4 · Product and polish

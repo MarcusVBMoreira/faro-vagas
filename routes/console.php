@@ -20,6 +20,10 @@ Schedule::call(fn () => \Illuminate\Support\Facades\Cache::forever('cron:heartbe
 
 Schedule::command('queue:prune-failed --hours=168')->daily();
 
+// Match (semana 3): embeddings das vagas novas e recálculo das "vagas para você"
+Schedule::job((new \App\Jobs\EmbedPendingJobPostings)->onQueue('jobs'))->everyFifteenMinutes();
+Schedule::command('faro:compute-matches')->hourlyAt(25);
+
 // Coleta de vagas: 1x por dia, de madrugada (a IA estrutura as novas ao longo da manhã)
 Schedule::command('faro:fetch-jobs')->dailyAt('05:40')->withoutOverlapping(120);
 Schedule::command('auth:clear-resets')->daily();
@@ -121,3 +125,27 @@ Artisan::command('faro:fetch-jobs {--source=* : slug da fonte (ex.: adzuna-br)}'
     $this->line('Vagas ativas: '.\App\Models\JobPosting::active()->count()
         .' · aguardando IA: '.\App\Models\JobPosting::active()->whereNull('extracted_at')->count());
 })->purpose('Coleta vagas das fontes (Grande SP + remotas)');
+
+/*
+ * Recalcula os matches. Sem opções, coloca na fila um cálculo por pessoa com perfil;
+ * com --user=ID --sync, calcula na hora e mostra o resultado (útil para conferir).
+ */
+Artisan::command('faro:compute-matches {--user= : id do usuário} {--sync : calcular agora, sem fila}', function () {
+    $users = \App\Models\User::whereHas('profile')
+        ->when($this->option('user'), fn ($q, $id) => $q->whereKey($id))
+        ->get();
+
+    foreach ($users as $user) {
+        if ($this->option('sync')) {
+            $count = app(\App\Services\Matching\MatchService::class)->computeFor($user);
+            $best = $user->jobMatches()->orderByDesc('score')->with('jobPosting:id,title')->limit(5)->get();
+            $this->line("usuário {$user->id}: {$count} matches · melhores: ".$best->map(fn ($m) => $m->score.' '.\Illuminate\Support\Str::limit($m->jobPosting?->title, 40))->implode(' | '));
+        } else {
+            \App\Jobs\ComputeMatches::dispatch($user);
+        }
+    }
+
+    $this->line($users->count().' perfil(is) '.($this->option('sync') ? 'calculados' : 'na fila')
+        .' · vagas com embedding: '.\App\Models\JobPosting::active()->whereNotNull('embedded_at')->count()
+        .'/'.\App\Models\JobPosting::active()->count());
+})->purpose('Recalcula as vagas para você');

@@ -6,6 +6,7 @@ use App\Enums\ContractType;
 use App\Enums\EducationLevel;
 use App\Enums\JobLevel;
 use App\Enums\WorkModality;
+use App\Jobs\ComputeMatches;
 use App\Services\ProfileUpdater;
 use App\Support\Areas;
 use App\Support\Brazil;
@@ -101,6 +102,8 @@ class ProfileController extends Controller
         $profile->save();
 
         $updater->syncSkillsFromForm($profile, $data['skills'] ?? '');
+
+        ComputeMatches::dispatch($request->user());
 
         return redirect()->route('profile.show')->with('status', __('Perfil salvo.'));
     }

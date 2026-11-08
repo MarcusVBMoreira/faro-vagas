@@ -23,7 +23,7 @@ class JobPosting extends Model
         'job_source_id', 'user_id', 'external_id', 'url', 'title', 'company', 'description', 'level', 'area',
         'education_level', 'modality', 'city', 'state', 'location_text', 'contract_type', 'is_pcd', 'is_international',
         'salary_min', 'salary_max', 'published_at', 'expires_at', 'status', 'ai_summary', 'extracted_at',
-        'content_hash', 'source_category', 'last_seen_at',
+        'content_hash', 'source_category', 'last_seen_at', 'embedding', 'embedded_at',
     ];
 
     protected $hidden = ['embedding'];
@@ -37,6 +37,7 @@ class JobPosting extends Model
             'is_pcd' => 'boolean',
             'is_international' => 'boolean',
             'last_seen_at' => 'datetime',
+            'embedded_at' => 'datetime',
             'published_at' => 'datetime',
             'expires_at' => 'datetime',
             'extracted_at' => 'datetime',

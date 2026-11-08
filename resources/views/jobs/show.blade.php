@@ -40,6 +40,19 @@
         </article>
 
         <aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
+            @if ($match)
+                <div class="rounded-lg border border-sinal/30 bg-sinal/5 p-5">
+                    <p class="font-display text-2xl font-bold text-sinal">{{ __(':percent% compatível', ['percent' => $match->score]) }}</p>
+                    @if ($match->strengths)
+                        <p class="mt-3 text-xs font-semibold text-success">{{ __('Você tem:') }}</p>
+                        <ul class="mt-1 flex flex-wrap gap-1.5">@foreach ($match->strengths as $reason) <x-match-reason :reason="$reason" /> @endforeach</ul>
+                    @endif
+                    @if ($match->gaps)
+                        <p class="mt-3 text-xs font-semibold text-accent-text">{{ __('Falta:') }}</p>
+                        <ul class="mt-1 flex flex-wrap gap-1.5">@foreach ($match->gaps as $reason) <x-match-reason :reason="$reason" type="gap" /> @endforeach</ul>
+                    @endif
+                </div>
+            @endif
             <div class="rounded-lg border border-line bg-raised p-5">
                 @if ($job->url)
                     <a href="{{ $job->url }}" target="_blank" rel="noopener nofollow" class="btn btn-primary h-11 w-full">{{ __('Ver vaga original e me candidatar') }}</a>

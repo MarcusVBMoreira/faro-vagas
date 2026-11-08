@@ -18,7 +18,7 @@ class Profile extends Model
 
     protected $fillable = [
         'headline', 'summary', 'desired_role', 'desired_level', 'area',
-        'desired_modalities', 'desired_contracts', 'salary_expectation', 'availability', 'open_to_work', 'accepts_international',
+        'desired_modalities', 'desired_contracts', 'salary_expectation', 'availability', 'open_to_work', 'accepts_international', 'embedding', 'embedding_hash', 'matches_computed_at',
         'city', 'state', 'phone', 'linkedin_url', 'portfolio_url',
         'willing_to_relocate', 'willing_to_travel', 'driver_license',
         'education_level', 'current_semester', 'graduation_year',
@@ -44,6 +44,7 @@ class Profile extends Model
             'is_pcd' => 'boolean',
             'pcd_consent_at' => 'datetime',
             'embedding' => 'array',
+            'matches_computed_at' => 'datetime',
             'embedded_at' => 'datetime',
         ];
     }

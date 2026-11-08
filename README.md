@@ -34,7 +34,7 @@ The site is available in **Portuguese, English and Spanish** (it targets the Bra
 - [x] Account deletion that wipes all user data and files (LGPD, Brazil's GDPR)
 - [x] Daily job collection for Greater São Paulo + remote jobs, every field (Adzuna, Jooble, Remotive, GitHub), with search and filters
 - [x] Add a job by hand; international remote jobs that accept people in Brazil (opt-in)
-- [ ] Job matching with embeddings + score *(week 3)*
+- [x] Matching with a 0–100 score, strengths and gaps for every job (embeddings + a transparent score computed in code)
 - [ ] Application Kanban board and daily email digest *(week 4)*
 
 ## Self-hosted AI, no paid API
