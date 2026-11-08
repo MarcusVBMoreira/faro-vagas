@@ -54,8 +54,8 @@ class MatchService
         DB::transaction(function () use ($user, $top) {
             $now = now();
             foreach ($top as $jobId => $r) {
-                JobMatch::updateOrCreate(
-                    ['user_id' => $user->id, 'job_posting_id' => $jobId],
+                $user->jobMatches()->updateOrCreate(
+                    ['job_posting_id' => $jobId],
                     [
                         'similarity' => $r['similarity'] !== null ? round($r['similarity'], 4) : null,
                         'score' => $r['score'],
