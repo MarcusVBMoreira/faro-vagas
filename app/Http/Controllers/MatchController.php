@@ -42,7 +42,27 @@ class MatchController extends Controller
             'hasData' => $hasData,
             'computedAt' => $profile?->matches_computed_at,
             'hidden' => $profile?->matches_hidden,
+            'saved' => $user->applications()->pluck('job_posting_id')->flip()->all(),
+            'learn' => $this->skillsToLearn($user),
         ]);
+    }
+
+    /**
+     * Habilidades que mais faltam nas vagas que combinam com a pessoa (as 50 melhores):
+     * um "o que estudar" baseado no mercado de verdade.
+     *
+     * @return array<string, int> nome => em quantas vagas falta
+     */
+    private function skillsToLearn($user): array
+    {
+        return $user->jobMatches()->whereNull('dismissed_at')->orderByDesc('score')->limit(50)->pluck('gaps')
+            ->flatMap(fn ($gaps) => collect($gaps ?? [])->where('k', 'skill')->pluck('v'))
+            ->map(fn ($name) => \Illuminate\Support\Str::of($name)->replace('_', ' ')->replaceMatches('/^(conhecimentos?|experi[eê]ncia|no[cç](ão|ões)|dom[ií]nio)\s+(em|de|com)\s+/iu', '')->trim()->ucfirst()->toString())
+            ->countBy()
+            ->filter(fn ($count) => $count >= 2)
+            ->sortDesc()
+            ->take(8)
+            ->all();
     }
 
     public function feedback(Request $request, JobMatch $match): RedirectResponse

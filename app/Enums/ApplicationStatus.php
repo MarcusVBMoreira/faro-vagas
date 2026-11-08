@@ -16,13 +16,13 @@ enum ApplicationStatus: string
 
     public function label(): string
     {
-        return match ($this) {
+        return __(match ($this) {
             self::Saved => 'Salva',
             self::Applied => 'Candidatura enviada',
             self::Test => 'Teste técnico',
             self::Interview => 'Entrevista',
             self::Offer => 'Proposta',
             self::Rejected => 'Não seguiu',
-        };
+        });
     }
 }

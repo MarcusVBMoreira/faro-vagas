@@ -1,4 +1,8 @@
 import './bootstrap';
+import { initBoard } from './board';
+
+const board = document.querySelector('[data-board]');
+if (board) initBoard(board);
 
 /*
  * Tela de carregamento: aparece por cima de tudo quando um formulário é enviado

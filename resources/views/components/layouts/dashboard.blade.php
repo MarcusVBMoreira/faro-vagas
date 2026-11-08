@@ -12,11 +12,15 @@
                     {{ __('Meu perfil') }}
                 </a>
                 <a href="{{ route('matches.index') }}"
-                   class="rounded-md px-3 py-2 {{ request()->routeIs('matches.*') ? 'bg-noite-2 text-white' : 'text-white/75 hover:text-white' }}">
+                   class="whitespace-nowrap rounded-md px-2 py-2 sm:px-3 {{ request()->routeIs('matches.*') ? 'bg-noite-2 text-white' : 'text-white/75 hover:text-white' }}">
                     {{ __('Para você') }}
                 </a>
+                <a href="{{ route('applications.index') }}"
+                   class="whitespace-nowrap rounded-md px-2 py-2 sm:px-3 {{ request()->routeIs('applications.*') ? 'bg-noite-2 text-white' : 'text-white/75 hover:text-white' }}">
+                    {{ __('Candidaturas') }}
+                </a>
                 <a href="{{ route('jobs.index') }}"
-                   class="rounded-md px-3 py-2 {{ request()->routeIs('jobs.*') ? 'bg-noite-2 text-white' : 'text-white/75 hover:text-white' }}">
+                   class="whitespace-nowrap rounded-md px-2 py-2 sm:px-3 {{ request()->routeIs('jobs.*') ? 'bg-noite-2 text-white' : 'text-white/75 hover:text-white' }}">
                     {{ __('Vagas') }}
                 </a>
                 <x-locale-switcher dark />

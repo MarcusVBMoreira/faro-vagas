@@ -18,7 +18,7 @@ class Profile extends Model
 
     protected $fillable = [
         'headline', 'summary', 'desired_role', 'desired_level', 'area',
-        'desired_modalities', 'desired_contracts', 'salary_expectation', 'availability', 'open_to_work', 'accepts_international', 'embedding', 'embedding_hash', 'matches_computed_at', 'accepted_levels', 'matches_hidden',
+        'desired_modalities', 'desired_contracts', 'salary_expectation', 'availability', 'open_to_work', 'accepts_international', 'embedding', 'embedding_hash', 'matches_computed_at', 'accepted_levels', 'matches_hidden', 'last_digest_at',
         'city', 'state', 'phone', 'linkedin_url', 'portfolio_url',
         'willing_to_relocate', 'willing_to_travel', 'driver_license',
         'education_level', 'current_semester', 'graduation_year',
@@ -46,6 +46,7 @@ class Profile extends Model
             'embedding' => 'array',
             'matches_computed_at' => 'datetime',
             'accepted_levels' => 'array',
+            'last_digest_at' => 'datetime',
             'embedded_at' => 'datetime',
         ];
     }

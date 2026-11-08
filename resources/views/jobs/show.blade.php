@@ -58,6 +58,15 @@
                     <a href="{{ $job->url }}" target="_blank" rel="noopener nofollow" class="btn btn-primary h-11 w-full">{{ __('Ver vaga original e me candidatar') }}</a>
                     <p class="mt-2 text-xs text-ink-muted">{{ __('A candidatura é feita no site da empresa ou da fonte.') }}</p>
                 @endif
+                @if ($application)
+                    <a href="{{ route('applications.index') }}" class="btn btn-secondary mt-3 h-10 w-full">{{ __('No seu quadro: :status', ['status' => $application->status->label()]) }}</a>
+                @else
+                    <form method="POST" action="{{ route('applications.store') }}" class="mt-3">
+                        @csrf
+                        <input type="hidden" name="job_posting_id" value="{{ $job->id }}">
+                        <button type="submit" class="btn btn-secondary h-10 w-full">{{ __('Salvar vaga') }}</button>
+                    </form>
+                @endif
                 <x-job-source-badge :job="$job" class="mt-3" />
                 @if ($job->published_at)
                     <p class="mt-1 text-xs text-ink-muted">{{ __('Publicada :time', ['time' => $job->published_at->diffForHumans()]) }}</p>

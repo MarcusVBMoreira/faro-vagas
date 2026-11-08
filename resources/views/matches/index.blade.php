@@ -35,6 +35,18 @@
             </p>
         @endif
 
+        @if (! empty($learn))
+            <section class="mt-4 rounded-lg border border-line bg-raised p-4" aria-labelledby="learn-title">
+                <h2 id="learn-title" class="text-sm font-semibold">{{ __('O que mais aparece nas suas vagas e você ainda não tem') }}</h2>
+                <ul class="mt-2 flex flex-wrap gap-1.5">
+                    @foreach ($learn as $skill => $count)
+                        <li class="rounded-sm bg-farol-soft px-2 py-1 text-xs font-medium">{{ $skill }} <span class="text-ink-muted">· {{ trans_choice(':count vaga|:count vagas', $count, ['count' => $count]) }}</span></li>
+                    @endforeach
+                </ul>
+                <p class="mt-2 text-xs text-ink-muted">{{ __('Aprender uma delas, ou colocar no perfil se você já sabe, aumenta sua nota em várias vagas de uma vez.') }}</p>
+            </section>
+        @endif
+
         <ol class="mt-6 grid gap-4">
             @foreach ($matches as $match)
                 @php
@@ -89,7 +101,18 @@
                                         </form>
                                     @endforeach
                                 </div>
-                                <a href="{{ route('jobs.show', $job) }}" class="text-sm font-medium text-accent-text underline">{{ __('Ver detalhes') }}</a>
+                                <div class="flex items-center gap-3">
+                                    @if (isset($saved[$job->id]))
+                                        <a href="{{ route('applications.index') }}" class="text-xs font-medium text-sinal">✓ {{ __('No seu quadro') }}</a>
+                                    @else
+                                        <form method="POST" action="{{ route('applications.store') }}">
+                                            @csrf
+                                            <input type="hidden" name="job_posting_id" value="{{ $job->id }}">
+                                            <button type="submit" class="rounded-md border border-line px-3 py-1.5 text-xs font-medium hover:border-ink-muted">{{ __('Salvar vaga') }}</button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('jobs.show', $job) }}" class="text-sm font-medium text-accent-text underline">{{ __('Ver detalhes') }}</a>
+                                </div>
                             </div>
                         </div>
                     </div>

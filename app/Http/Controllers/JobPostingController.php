@@ -79,6 +79,7 @@ class JobPostingController extends Controller
         return view('jobs.show', [
             'job' => $job->load(['source', 'skills']),
             'match' => $request->user()->jobMatches()->where('job_posting_id', $job->id)->first(),
+            'application' => $request->user()->applications()->where('job_posting_id', $job->id)->first(),
         ]);
     }
 

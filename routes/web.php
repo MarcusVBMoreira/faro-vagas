@@ -7,6 +7,8 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\AvatarController;
+use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\DigestController;
 use App\Http\Controllers\JobPostingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MatchController;
@@ -60,6 +62,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/perfil/curriculo', [ResumeController::class, 'store'])->middleware('throttle:10,1')->name('resume.store');
         Route::get('/perfil/curriculo/status', [ResumeController::class, 'status'])->name('resume.status');
 
+        Route::get('/candidaturas', [ApplicationController::class, 'index'])->name('applications.index');
+        Route::post('/candidaturas', [ApplicationController::class, 'store'])->name('applications.store');
+        Route::post('/candidaturas/ordenar', [ApplicationController::class, 'reorder'])->middleware('throttle:120,1')->name('applications.reorder');
+        Route::patch('/candidaturas/{application}', [ApplicationController::class, 'update'])->whereNumber('application')->name('applications.update');
+        Route::delete('/candidaturas/{application}', [ApplicationController::class, 'destroy'])->whereNumber('application')->name('applications.destroy');
+
         Route::get('/para-voce', [MatchController::class, 'index'])->name('matches.index');
         Route::post('/para-voce/recalcular', [MatchController::class, 'refresh'])->middleware('throttle:6,1')->name('matches.refresh');
         Route::post('/para-voce/{match}/avaliar', [MatchController::class, 'feedback'])->whereNumber('match')->name('matches.feedback');
@@ -74,3 +82,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/conta', [AccountController::class, 'destroy'])->name('account.destroy');
     });
 });
+
+// Link de cancelamento do e-mail diário (assinado: só funciona com a assinatura do e-mail)
+Route::get('/email/cancelar/{user}', [DigestController::class, 'unsubscribe'])
+    ->middleware(['signed', 'throttle:10,1'])->name('digest.unsubscribe');

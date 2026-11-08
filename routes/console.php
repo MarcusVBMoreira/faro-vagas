@@ -24,6 +24,9 @@ Schedule::command('queue:prune-failed --hours=168')->daily();
 Schedule::job((new \App\Jobs\EmbedPendingJobPostings)->onQueue('jobs'))->everyFifteenMinutes();
 Schedule::command('faro:compute-matches')->hourlyAt(25);
 
+// E-mail diário com as melhores vagas novas (depois da coleta e dos recálculos da manhã)
+Schedule::command('faro:send-digests')->dailyAt('07:50')->withoutOverlapping(60);
+
 // Coleta de vagas: 1x por dia, de madrugada (a IA estrutura as novas ao longo da manhã)
 Schedule::command('faro:fetch-jobs')->dailyAt('05:40')->withoutOverlapping(120);
 Schedule::command('auth:clear-resets')->daily();
@@ -149,3 +152,14 @@ Artisan::command('faro:compute-matches {--user= : id do usuário} {--sync : calc
         .' · vagas com embedding: '.\App\Models\JobPosting::active()->whereNotNull('embedded_at')->count()
         .'/'.\App\Models\JobPosting::active()->count());
 })->purpose('Recalcula as vagas para você');
+
+Artisan::command('faro:send-digests {--user= : só para este usuário}', function () {
+    $sender = app(\App\Services\Matching\DigestSender::class);
+    $sent = 0;
+    \App\Models\User::whereHas('profile', fn ($q) => $q->where('digest_enabled', true))
+        ->when($this->option('user'), fn ($q, $id) => $q->whereKey($id))
+        ->each(function ($user) use ($sender, &$sent) {
+            $sent += $sender->sendTo($user) > 0 ? 1 : 0;
+        });
+    $this->line("Resumos enviados: {$sent}");
+})->purpose('Envia o e-mail diário de vagas');
