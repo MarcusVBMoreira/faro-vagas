@@ -7,6 +7,7 @@ use App\Models\JobMatch;
 use App\Models\JobPosting;
 use App\Models\Profile;
 use App\Models\User;
+use App\Support\Grounding;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
