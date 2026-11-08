@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Enums\ApplicationStatus;
 use App\Models\JobPosting;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class JobPostingHashTest extends TestCase
 {
