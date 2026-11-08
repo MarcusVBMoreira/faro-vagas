@@ -36,6 +36,13 @@ class JobCollector
         foreach ($connector->fetch($source) as $job) {
             $stats['fetched']++;
 
+            // Título que chegou corrompido da fonte ("??????"): sem como saber o que é a vaga
+            if (preg_match_all('/\p{L}/u', $job->title) < 3) {
+                $stats['duplicated']++;
+
+                continue;
+            }
+
             if (! $job->international && ! Region::accepts($job->city, $job->state, $job->remote)) {
                 $stats['outside_region']++;
 

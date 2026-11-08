@@ -125,6 +125,15 @@ class JobCollectionTest extends TestCase
         $this->assertSame('closed', $old->fresh()->status);
     }
 
+    public function test_garbled_titles_are_discarded(): void
+    {
+        $this->fakeSources([$this->adzunaJob(['title' => '??????'])]);
+
+        $this->fetch(['adzuna-br']);
+
+        $this->assertSame(0, JobPosting::count());
+    }
+
     public function test_old_postings_are_not_stored(): void
     {
         $this->fakeSources([$this->adzunaJob(['created' => now()->subDays(90)->toIso8601String()])]);
