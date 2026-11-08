@@ -49,6 +49,8 @@ class ProfileController extends Controller
             'desired_role' => ['nullable', 'string', 'max:120'],
             'area' => ['nullable', Rule::in(Areas::keys())],
             'desired_level' => ['nullable', Rule::enum(JobLevel::class)],
+            'accepted_levels' => ['nullable', 'array'],
+            'accepted_levels.*' => [Rule::enum(JobLevel::class)],
             'desired_modalities' => ['nullable', 'array'],
             'desired_modalities.*' => [Rule::enum(WorkModality::class)],
             'desired_contracts' => ['nullable', 'array'],
@@ -82,6 +84,7 @@ class ProfileController extends Controller
 
         $profile->fill([
             ...collect($data)->except(['skills', 'languages', 'pcd'])->all(),
+            'accepted_levels' => array_values($data['accepted_levels'] ?? []) ?: null,
             'desired_modalities' => array_values($data['desired_modalities'] ?? []),
             'desired_contracts' => array_values($data['desired_contracts'] ?? []),
             'driver_license' => array_values($data['driver_license'] ?? []),

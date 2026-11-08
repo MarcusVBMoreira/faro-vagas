@@ -34,7 +34,7 @@ final class MatchScorer
 
     /**
      * @param  array<int, true>  $profileSkillIds
-     * @return array{score: int, strengths: list<array{k: string, v?: string}>, gaps: list<array{k: string, v?: string}>}
+     * @return array{score: int, strengths: list<array{k: string, v?: string}>, gaps: list<array{k: string, v?: string}>, parts: array<string, ?float>}
      */
     public function score(Profile $profile, array $profileSkillIds, JobPosting $job, ?float $similarity): array
     {
@@ -82,18 +82,21 @@ final class MatchScorer
             $parts['area'] = null;
         }
 
-        // Nível (distância na escala de JobLevel)
-        if ($job->level && $profile->desired_level) {
-            $distance = abs($this->levelIndex($job->level) - $this->levelIndex($profile->desired_level));
+        // Nível: o desejado vale tudo; os outros níveis aceitos (CareerFit) valem 80%
+        $accepted = CareerFit::acceptedLevels($profile);
+        if ($job->level && ($profile->desired_level || $accepted)) {
+            $exact = $job->level === $profile->desired_level;
+            $ok = $exact || in_array($job->level->value, $accepted ?? [], true);
+            $distance = $profile->desired_level ? abs($this->levelIndex($job->level) - $this->levelIndex($profile->desired_level)) : 3;
             $parts['level'] = match (true) {
-                $distance === 0 => 1.0,
-                $distance === 1 => 0.6,
-                $distance === 2 => 0.25,
+                $exact => 1.0,
+                $ok => 0.8,
+                $distance === 1 => 0.5,
                 default => 0.0,
             };
-            if ($distance === 0) {
+            if ($ok) {
                 $strengths[] = ['k' => 'level'];
-            } elseif ($distance >= 2) {
+            } else {
                 $gaps[] = ['k' => 'level', 'v' => $job->level->value];
             }
         } else {
@@ -132,6 +135,7 @@ final class MatchScorer
             'score' => (int) round(max(0, min(100, $score))),
             'strengths' => $strengths,
             'gaps' => $gaps,
+            'parts' => $parts, // frações 0..1 por critério (null = desconhecido), para diagnóstico
         ];
     }
 

@@ -187,6 +187,22 @@
                         </label>
                     </div>
 
+                    @php
+                        $acceptedNow = old('accepted_levels', $profile->accepted_levels ?? \App\Services\Matching\CareerFit::acceptedLevels($profile) ?? []);
+                    @endphp
+                    <fieldset class="mt-6">
+                        <legend class="text-sm font-medium">{{ __('Níveis de vaga que me interessam') }}</legend>
+                        <p class="text-xs text-ink-muted">{{ __('Vagas de outros níveis não entram nas suas recomendações. Sem nada marcado, usamos o nível desejado e os vizinhos dele.') }}</p>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @foreach ($levels as $level)
+                                <label class="{{ $chip }}">
+                                    <input type="checkbox" name="accepted_levels[]" value="{{ $level->value }}" class="h-4 w-4 accent-noite" @checked(in_array($level->value, $acceptedNow, true))>
+                                    {{ $level->label() }}
+                                </label>
+                            @endforeach
+                        </div>
+                    </fieldset>
+
                     <fieldset class="mt-6">
                         <legend class="text-sm font-medium">{{ __('Tipos de contrato que aceita') }}</legend>
                         <div class="mt-2 flex flex-wrap gap-2">

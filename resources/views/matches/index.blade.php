@@ -28,6 +28,13 @@
             <a href="{{ route('jobs.index') }}" class="btn btn-secondary mt-5 h-10">{{ __('Ver todas as vagas') }}</a>
         </div>
     @else
+        @if (($hidden ?? 0) > 0)
+            <p class="mt-4 rounded-md bg-sunken px-4 py-3 text-sm">
+                {{ __(':count vagas ficaram de fora por nível ou escolaridade (por exemplo, pleno, sênior ou com diploma exigido).', ['count' => $hidden]) }}
+                <a href="{{ route('profile.show') }}#objetivo" class="font-medium text-accent-text underline">{{ __('Ajustar níveis') }}</a>
+            </p>
+        @endif
+
         <ol class="mt-6 grid gap-4">
             @foreach ($matches as $match)
                 @php

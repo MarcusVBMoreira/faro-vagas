@@ -35,16 +35,23 @@ class MatchService
         $keep = (int) config('faro.matching.keep');
 
         $scored = [];
+        $hidden = 0;
         JobPosting::query()
             ->active()
             ->visibleTo($user)
             ->when(! $profile->accepts_international, fn ($q) => $q->where('is_international', false))
             ->with('skills')
             ->select('job_postings.*')
-            ->chunkById(200, function ($jobs) use (&$scored, $profile, $profileSkillIds) {
+            ->chunkById(200, function ($jobs) use (&$scored, &$hidden, $profile, $profileSkillIds) {
                 foreach ($jobs as $job) {
+                    if (CareerFit::rejects($profile, $job)) {
+                        $hidden++; // nível ou escolaridade fora do momento de carreira
+
+                        continue;
+                    }
                     $similarity = Vector::cosine($profile->embedding, $job->embedding);
                     $scored[$job->id] = [...$this->scorer->score($profile, $profileSkillIds, $job, $similarity), 'similarity' => $similarity];
+                    unset($scored[$job->id]['parts']);
                 }
             });
 
@@ -74,7 +81,7 @@ class MatchService
                 ->delete();
         });
 
-        $profile->forceFill(['matches_computed_at' => now()])->save();
+        $profile->forceFill(['matches_computed_at' => now(), 'matches_hidden' => $hidden])->save();
 
         return count($top);
     }

@@ -47,7 +47,7 @@ class MatchTest extends TestCase
     {
         $good = $this->job('Assistente Administrativo', 'administracao', ['Excel', 'Atendimento ao cliente']);
         $half = $this->job('Recepcionista', 'administracao', ['Excel', 'Inglês']);
-        $bad = $this->job('Desenvolvedor Go Sênior', 'tecnologia', ['Go', 'Kubernetes'], ['level' => 'senior', 'modality' => 'remoto', 'contract_type' => 'pj']);
+        $bad = $this->job('Desenvolvedor Go Sênior', 'tecnologia', ['Go', 'Kubernetes'], ['level' => 'junior', 'modality' => 'remoto', 'contract_type' => 'pj']);
         (new EmbedPendingJobPostings)->handle(app(\App\Contracts\AiClient::class));
         $this->assertNotNull($good->fresh()->embedded_at);
 
@@ -155,5 +155,31 @@ class MatchTest extends TestCase
 
         $this->assertNull(JobMatch::firstOrFail()->similarity);
         $this->assertNull($user->profile->fresh()->embedding);
+    }
+
+    public function test_student_does_not_get_senior_or_degree_required_jobs(): void
+    {
+        $this->job('Estágio em Desenvolvimento Web', 'tecnologia', ['Excel'], ['level' => 'estagio', 'education_level' => 'superior']);
+        $this->job('Desenvolvedor Web Júnior', 'tecnologia', ['Excel'], ['level' => 'junior']);
+        $this->job('Desenvolvedor Web Pleno', 'tecnologia', ['Excel'], ['level' => 'pleno']);
+        $this->job('Desenvolvedor Web', 'tecnologia', ['Excel'], ['level' => 'junior', 'education_level' => 'superior']);
+        $user = $this->userWithProfile(['area' => 'tecnologia', 'desired_level' => 'estagio', 'education_level' => 'superior_cursando', 'current_semester' => 2]);
+
+        $this->artisan('faro:compute-matches', ['--user' => $user->id, '--sync' => true]);
+
+        $titles = JobMatch::with('jobPosting')->get()->pluck('jobPosting.title')->sort()->values()->all();
+        $this->assertSame(['Desenvolvedor Web Júnior', 'Estágio em Desenvolvimento Web'], $titles);
+        $this->assertSame(2, $user->profile->fresh()->matches_hidden);
+        $this->actingAs($user)->get('/para-voce')->assertSee('2 vagas ficaram de fora');
+    }
+
+    public function test_profile_saves_accepted_levels(): void
+    {
+        $user = $this->userWithProfile();
+
+        $this->actingAs($user)->put('/perfil', ['accepted_levels' => ['estagio', 'junior']])->assertSessionHasNoErrors();
+        $this->assertSame(['estagio', 'junior'], $user->profile->fresh()->accepted_levels);
+
+        $this->actingAs($user)->put('/perfil', ['accepted_levels' => ['chefe']])->assertSessionHasErrors('accepted_levels.0');
     }
 }

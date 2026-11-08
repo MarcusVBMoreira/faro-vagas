@@ -41,6 +41,7 @@ class MatchController extends Controller
             'matches' => $matches,
             'hasData' => $hasData,
             'computedAt' => $profile?->matches_computed_at,
+            'hidden' => $profile?->matches_hidden,
         ]);
     }
 
