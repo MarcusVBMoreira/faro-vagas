@@ -19,5 +19,10 @@ while (microtime(true) - $t < 230) {
 $secs = round(microtime(true) - $t);
 echo "com embedding agora: ".(clone $a)->whereNotNull("embedded_at")->count()." (em {$secs}s)".PHP_EOL;
 ' 2>&1 | tail -5
+php artisan tinker --execute='
+$t = DB::selectOne("select table_collation c from information_schema.tables where table_schema = database() and table_name = \"job_postings\"");
+echo "collation job_postings: ".($t->c ?? "?")." · conexão: ".config("database.connections.mysql.charset").PHP_EOL;
+foreach (App\Models\JobPosting::where("title", "like", "%???%")->limit(3)->get(["id", "title", "job_source_id"]) as $j) echo "título com ???: #{$j->id} fonte {$j->job_source_id} hex ".bin2hex(mb_substr($j->title, 0, 6)).PHP_EOL;
+' 2>&1 | tail -4
 php artisan faro:compute-matches --sync 2>&1 | sed -E 's/usuário ([0-9]+)/usuário #\1/' | tail -10
 true
