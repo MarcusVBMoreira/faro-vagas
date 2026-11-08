@@ -115,4 +115,34 @@ class MatchScorerTest extends TestCase
         $this->assertNull(Vector::cosine(null, [1]));
         $this->assertNull(Vector::cosine([0, 0], [1, 1]));
     }
+
+    public function test_requirements_are_compared_with_the_whole_profile_text(): void
+    {
+        $student = $this->profile(['area' => 'tecnologia', 'desired_level' => JobLevel::Estagio, 'education_level' => EducationLevel::SuperiorCursando]);
+        $job = $this->job(['area' => 'tecnologia'], [
+            $this->skill(20, 'conhecimento em Lógica de programação', true),   // "programação" e "lógica" estão no perfil
+            $this->skill(21, 'Node.js', true),                                  // perfil tem "Node"
+            $this->skill(22, 'ciencias_da_computacao', true),                   // formação: atende quem está cursando
+            $this->skill(23, 'Go', true),                                       // "algo" no perfil não vale como "Go"
+            $this->skill(24, 'PCD', true),                                      // ignorado
+        ]);
+        $evidence = \App\Support\Grounding::plain('Lógica de programação, Node, React. Gosto de aprender algo novo.');
+
+        $r = (new MatchScorer)->score($student, [], $job, null, $evidence);
+
+        $have = collect($r['strengths'])->where('k', 'skill')->pluck('v')->all();
+        $this->assertEqualsCanonicalizing(['conhecimento em Lógica de programação', 'Node.js', 'ciencias_da_computacao'], $have);
+        $this->assertSame([['k' => 'skill', 'v' => 'Go']], array_values(array_filter($r['gaps'], fn ($g) => $g['k'] === 'skill')));
+        $this->assertEqualsWithDelta(0.75, $r['parts']['skills'], 0.001); // 3 de 4 (PcD fora da conta)
+    }
+
+    public function test_similarity_calibration(): void
+    {
+        $scorer = new MatchScorer;
+        $job = $this->job([]);
+
+        $this->assertSame(0.0, $scorer->score(new Profile, [], $job, 0.40)['parts']['similarity']);
+        $this->assertEqualsWithDelta(0.6, $scorer->score(new Profile, [], $job, 0.60)['parts']['similarity'], 0.001);
+        $this->assertSame(1.0, $scorer->score(new Profile, [], $job, 0.75)['parts']['similarity']);
+    }
 }

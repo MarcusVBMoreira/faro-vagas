@@ -32,6 +32,7 @@ class MatchService
 
         $this->refreshProfileEmbedding($profile);
         $profileSkillIds = array_fill_keys($profile->skills()->pluck('skills.id')->all(), true);
+        $evidence = self::evidence($profile);
         $keep = (int) config('faro.matching.keep');
 
         $scored = [];
@@ -42,7 +43,7 @@ class MatchService
             ->when(! $profile->accepts_international, fn ($q) => $q->where('is_international', false))
             ->with('skills')
             ->select('job_postings.*')
-            ->chunkById(200, function ($jobs) use (&$scored, &$hidden, $profile, $profileSkillIds) {
+            ->chunkById(200, function ($jobs) use (&$scored, &$hidden, $profile, $profileSkillIds, $evidence) {
                 foreach ($jobs as $job) {
                     if (CareerFit::rejects($profile, $job)) {
                         $hidden++; // nível ou escolaridade fora do momento de carreira
@@ -50,7 +51,7 @@ class MatchService
                         continue;
                     }
                     $similarity = Vector::cosine($profile->embedding, $job->embedding);
-                    $scored[$job->id] = [...$this->scorer->score($profile, $profileSkillIds, $job, $similarity), 'similarity' => $similarity];
+                    $scored[$job->id] = [...$this->scorer->score($profile, $profileSkillIds, $job, $similarity, $evidence), 'similarity' => $similarity];
                     unset($scored[$job->id]['parts']);
                 }
             });
@@ -84,6 +85,21 @@ class MatchService
         $profile->forceFill(['matches_computed_at' => now(), 'matches_hidden' => $hidden])->save();
 
         return count($top);
+    }
+
+    /** Tudo que o perfil diz que a pessoa sabe, num texto só (para comparar com os requisitos da vaga). */
+    public static function evidence(Profile $profile): string
+    {
+        $profile->loadMissing(['skills', 'experiences', 'educations']);
+        $languages = collect($profile->languages ?? [])->map(fn ($l) => \App\Support\Brazil::LANGUAGES[$l['language']] ?? $l['language']);
+
+        return Grounding::plain(implode(' ', array_filter([
+            $profile->skills->pluck('name')->implode(' '),
+            $profile->experiences->map(fn ($e) => $e->role.' '.$e->description)->implode(' '),
+            $profile->educations->map(fn ($e) => $e->course)->implode(' '),
+            $languages->implode(' '),
+            $profile->desired_role, $profile->headline, $profile->summary,
+        ])));
     }
 
     /** Sem cargo, área ou habilidades não há o que comparar. */

@@ -10,7 +10,11 @@ use Illuminate\Support\Str;
  */
 final class Grounding
 {
-    private const STOP = ['com', 'para', 'por', 'dos', 'das', 'nos', 'nas', 'uma', 'que', 'and', 'the', 'with', 'em', 'de', 'do', 'da', 'e', 'ou', 'of', 'in', 'to', 'a', 'o'];
+    private const STOP = [
+        'com', 'para', 'por', 'dos', 'das', 'nos', 'nas', 'uma', 'que', 'and', 'the', 'with', 'em', 'de', 'do', 'da', 'e', 'ou', 'of', 'in', 'to', 'a', 'o',
+        // palavras de "embrulho" de requisito: "conhecimento em X", "experiência com Y"
+        'conhecimento', 'conhecimentos', 'experiencia', 'nocoes', 'nocao', 'dominio', 'basico', 'avancado', 'knowledge', 'experience',
+    ];
 
     public static function plain(string $text): string
     {
@@ -29,8 +33,11 @@ final class Grounding
             return true;
         }
 
-        // Prefixo de 5 letras tolera plural e flexão ("faturamento" x "faturar")
-        $found = array_filter($words, fn ($w) => str_contains($plainSource, mb_strlen($w) > 5 ? mb_substr($w, 0, 5) : $w));
+        // Palavra curta ("go", "r", "sql") só vale inteira; longa, pelo prefixo de 5 letras,
+        // que tolera plural e flexão ("faturamento" x "faturar")
+        $found = array_filter($words, fn ($w) => mb_strlen($w) <= 3
+            ? (bool) preg_match('/(?<![a-z0-9])'.preg_quote($w, '/').'(?![a-z0-9])/', $plainSource)
+            : str_contains($plainSource, mb_strlen($w) > 5 ? mb_substr($w, 0, 5) : $w));
 
         return count($found) / count($words) >= $ratio;
     }

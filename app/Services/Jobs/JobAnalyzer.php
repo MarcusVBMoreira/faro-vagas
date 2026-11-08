@@ -41,8 +41,16 @@ class JobAnalyzer
     public static function normalize(array $raw, string $sourceText): array
     {
         $plain = Grounding::plain($sourceText);
+        $clean = fn ($list) => array_map(
+            fn ($s) => is_string($s) ? trim(preg_replace('/^(conhecimentos?|experi[eê]ncia|no[cç](ão|ões|oes|ao)|dom[ií]nio)\s+(em|de|com|no|na)\s+/iu', '', str_replace('_', ' ', $s))) : $s,
+            (array) $list,
+        );
+        $base = fn ($list) => array_values(array_filter(
+            ProfileNormalizer::skills($clean($list)),
+            fn ($s) => mb_strtolower($s) !== 'pcd',
+        ));
         $skills = fn ($list) => array_values(array_filter(
-            ProfileNormalizer::skills($list),
+            $base($list),
             fn ($s) => Grounding::isGrounded($s, $plain, 0.34) || Grounding::isGrounded(app(SkillCatalog::class)->canonical($s), $plain, 0.34),
         ));
 

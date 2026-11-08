@@ -2,9 +2,12 @@
 
 namespace App\Services\Matching;
 
+use App\Enums\EducationLevel;
 use App\Enums\JobLevel;
 use App\Models\JobPosting;
 use App\Models\Profile;
+use App\Support\Grounding;
+use Illuminate\Support\Str;
 
 /**
  * Nota de compatibilidade 0–100, calculada em código (explicável e sem alucinação).
@@ -24,30 +27,55 @@ final class MatchScorer
 {
     public const WEIGHTS = ['skills' => 40, 'similarity' => 30, 'area' => 15, 'level' => 10, 'logistics' => 5];
 
-    /** Faixa típica de cosseno do bge-m3 entre textos de vaga: abaixo de MIN é "nada a ver", acima de MAX é "muito parecido". */
-    private const SIM_MIN = 0.35;
+    /**
+     * Faixa de cosseno do bge-m3 entre perfil e vagas, medida em produção (nov/2026, 711 vagas):
+     * mínimo 0,38 · mediana 0,52 · p90 0,61 · máximo 0,76. Abaixo de MIN é "nada a ver";
+     * a partir de MAX, "muito parecido".
+     */
+    private const SIM_MIN = 0.45;
 
-    private const SIM_MAX = 0.80;
+    private const SIM_MAX = 0.70;
+
+    /** Requisito que na verdade é formação ("Ciência da Computação", "cursando TI"). */
+    private const EDUCATION_SKILL = '/(ciencias? da computacao|sistemas? de informacao|gestao da tecnologia|formacao|graduac|cursando|ensino superior|tecnologo|faculdade|bacharel|licenciatura|curso tecnico)/';
 
     /** Crédito de um item desconhecido (fração do peso). */
     public const UNKNOWN_CREDIT = 0.4;
 
     /**
      * @param  array<int, true>  $profileSkillIds
+     * @param  string|null  $evidence  texto do perfil já passado por Grounding::plain() (habilidades,
+     *                                 experiências, formação, idiomas): "Lógica de programação" bate
+     *                                 com quem tem "programação"; "Node.js" com quem tem "Node".
      * @return array{score: int, strengths: list<array{k: string, v?: string}>, gaps: list<array{k: string, v?: string}>, parts: array<string, ?float>}
      */
-    public function score(Profile $profile, array $profileSkillIds, JobPosting $job, ?float $similarity): array
+    public function score(Profile $profile, array $profileSkillIds, JobPosting $job, ?float $similarity, ?string $evidence = null): array
     {
+        $has = function ($skill) use ($profile, $profileSkillIds, $evidence, $job): bool {
+            if (isset($profileSkillIds[$skill->id])) {
+                return true;
+            }
+            $name = Str::lower(Str::ascii(str_replace('_', ' ', $skill->name)));
+            if (preg_match(self::EDUCATION_SKILL, $name)) {
+                // Pede formação: atende quem estuda ou já se formou, na mesma área da vaga
+                return (CareerFit::isStudent($profile) || ($profile->education_level?->rank() ?? 0) >= EducationLevel::Superior->rank())
+                    && (! $job->area || $job->area === $profile->area);
+            }
+
+            return $evidence !== null && Grounding::isGrounded($name, $evidence, 0.5);
+        };
+
         $parts = [];       // nome => fração 0..1 (null = desconhecido)
         $strengths = [];
         $gaps = [];
 
-        // Habilidades
-        $required = $job->skills->filter(fn ($s) => (bool) $s->pivot->is_required);
-        $desirable = $job->skills->reject(fn ($s) => (bool) $s->pivot->is_required);
-        if ($job->skills->isNotEmpty()) {
-            $haveReq = $required->filter(fn ($s) => isset($profileSkillIds[$s->id]));
-            $haveDes = $desirable->filter(fn ($s) => isset($profileSkillIds[$s->id]));
+        // Habilidades ("PcD" listado como requisito é ignorado: dado sensível não entra na nota)
+        $skills = $job->skills->reject(fn ($s) => Str::lower(trim($s->name)) === 'pcd');
+        $required = $skills->filter(fn ($s) => (bool) $s->pivot->is_required);
+        $desirable = $skills->reject(fn ($s) => (bool) $s->pivot->is_required);
+        if ($skills->isNotEmpty()) {
+            $haveReq = $required->filter($has);
+            $haveDes = $desirable->filter($has);
             $req = $required->count() ? $haveReq->count() / $required->count() : null;
             $des = $desirable->count() ? $haveDes->count() / $desirable->count() : null;
             $parts['skills'] = match (true) {
@@ -58,10 +86,10 @@ final class MatchScorer
             foreach ($haveReq->concat($haveDes) as $s) {
                 $strengths[] = ['k' => 'skill', 'v' => $s->name];
             }
-            foreach ($required->reject(fn ($s) => isset($profileSkillIds[$s->id]))->take(6) as $s) {
+            foreach ($required->diff($haveReq)->take(6) as $s) {
                 $gaps[] = ['k' => 'skill', 'v' => $s->name];
             }
-            foreach ($desirable->reject(fn ($s) => isset($profileSkillIds[$s->id]))->take(3) as $s) {
+            foreach ($desirable->diff($haveDes)->take(3) as $s) {
                 $gaps[] = ['k' => 'nice', 'v' => $s->name];
             }
         } else {
