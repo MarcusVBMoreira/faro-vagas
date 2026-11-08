@@ -38,7 +38,7 @@ Feedback after the first real test: the product looked like a tech-only job boar
 - [x] **Portuguese, English and Spanish**: language switcher, browser detection, saved per account; emails go out in the user's language
 - [x] Security settings: change password, toggle 2FA
 
-## Week 2 · Job collection (in progress)
+## Week 2 · Job collection ✅
 Scope decision: **Greater São Paulo (39 cities) + remote jobs**, every field. `FARO_JOBS_REGION=brasil` opens it to the whole country.
 - [x] `JobSourceConnector` interface with connectors, all through official or public APIs:
   - **Adzuna Brasil** (aggregator of Brazilian job sites, every field, free key)
@@ -51,10 +51,10 @@ Scope decision: **Greater São Paulo (39 cities) + remote jobs**, every field. `
 - [x] Jobs page with search and filters (field, level, work model, contract, disability-inclusive, international) and a detail page with source credit
 - [x] Add a job by hand (private to the user who added it)
 - [x] "I accept remote jobs from other countries" profile preference
-- [ ] Adzuna and Jooble keys in production
+- [x] Adzuna and Jooble keys in production (the Jooble key is per country: br.jooble.org)
 - **Deliverable:** the database fills itself with job postings.
 
-## Week 3 · AI matching
+## Week 3 · AI matching ✅
 - [x] Profile and posting embeddings (`bge-m3` on the VPS); postings embedded in batches every 15 minutes, the profile only when its text changes
 - [x] `MatchService`: SQL filters (active, visible, international only if opted in), cosine similarity in PHP, best 50 stored
 - [x] `MatchScorer`, a score computed in code: required/nice-to-have skills 40, AI similarity 30, field 15, level 10, work model and contract 5; unknown items have their weight redistributed; education below the requirement costs 10; disability data is never read
@@ -65,11 +65,13 @@ Scope decision: **Greater São Paulo (39 cities) + remote jobs**, every field. `
 - **Deliverable:** the heart of the project working.
 
 ## Week 4 · Product and polish
-- [ ] Application Kanban board (SortableJS)
-- [ ] Daily email digest with the best new jobs
+- [x] Application Kanban board (SortableJS drag and drop, plus a selector that works without JavaScript), notes, stage history
+- [x] Daily email digest at 07:50 with up to 5 new jobs (score ≥ 55), signed unsubscribe link
+- [x] "What to learn": most frequent gaps across the person's best matches
+- [x] Career-stage filter (accepted levels, degree requirements) after real-user feedback
+- [x] README with the match funnel diagram
+- [ ] Demo GIF in the README
 - [ ] Faster résumé analysis on the VPS (smaller prompt, streaming, model tuning)
-- [ ] Dashboard: applications per stage, most requested skills
-- [ ] Final README with a GIF and a diagram of the match funnel
 - **Deliverable:** portfolio-ready project.
 
 ## After the first month

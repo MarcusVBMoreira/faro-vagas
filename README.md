@@ -21,7 +21,7 @@
 
 The site is available in **Portuguese, English and Spanish** (it targets the Brazilian job market, so Portuguese is the default). The code comments are in Portuguese; this documentation is in English.
 
-> 🚧 Portfolio project, built in public. Follow the progress on the [roadmap](docs/ROADMAP.md).
+> Portfolio project, built in public in one month. See how it was planned and shipped week by week in the [roadmap](docs/ROADMAP.md).
 
 ## Features
 
@@ -35,7 +35,9 @@ The site is available in **Portuguese, English and Spanish** (it targets the Bra
 - [x] Daily job collection for Greater São Paulo + remote jobs, every field (Adzuna, Jooble, Remotive, GitHub), with search and filters
 - [x] Add a job by hand; international remote jobs that accept people in Brazil (opt-in)
 - [x] Matching with a 0–100 score, strengths and gaps for every job (embeddings + a transparent score computed in code)
-- [ ] Application Kanban board and daily email digest *(week 4)*
+- [x] Application Kanban board (drag and drop, keyboard-friendly fallback, notes, history)
+- [x] Daily email with the best new jobs, in the user's language, with one-click unsubscribe
+- [x] "What to learn": the skills that most often appear as gaps in your best matches
 
 ## Self-hosted AI, no paid API
 
@@ -59,13 +61,28 @@ Before choosing the models, I benchmarked them on the VPS (1 vCPU, 4 GB RAM, no 
 
 What small models still get wrong ("3º semestre" instead of `3`, `"Mauá/SP"` as a city, "Enfermagem" instead of the `saude` field key, "+55 11 9..." phone formats, "atual" as an end date) is fixed deterministically in [`ProfileNormalizer`](app/Support/ProfileNormalizer.php), and the response is constrained with a JSON Schema.
 
-## How matching works *(weeks 2–3)*
+## How matching works
 
-Sending every job posting to an LLM would be slow and expensive, so Faro uses a three-step funnel:
+Sending every job posting to an LLM would be slow on a 1-CPU server, so Faro uses a funnel where the AI only does what code can't:
 
-1. **SQL filters**: field, level, contract, work mode, location and education discard most postings at no cost.
-2. **Semantic similarity**: the profile and each posting become embeddings; the ~20 closest postings move on.
-3. **Score in code**: required vs. nice-to-have skills the candidate has, plus similarity, produce the score, strengths and gaps, with no hallucinations. Sensitive data (disability) is never part of the score.
+```mermaid
+flowchart LR
+    A[Adzuna · Jooble<br/>Remotive · GitHub] -->|daily 05:40| B[Region filter<br/>Greater SP + remote<br/>de-duplication]
+    B --> C[Rule-based classifier<br/>contract · work model · level]
+    C --> D[LLM reads each posting<br/>field · level · education · skills<br/>grounded in the text]
+    D --> E[Embeddings<br/>bge-m3]
+    P[Résumé PDF] --> Q[LLM builds the profile<br/>+ ProfileNormalizer] --> R[Profile embedding]
+    E --> F{Career fit<br/>accepted levels<br/>degree required?}
+    R --> F
+    F -->|passes| G[Score in PHP<br/>skills 40 · similarity 30<br/>field 15 · level 10 · work model 5]
+    G --> H[Best 50 per person<br/>strengths and gaps]
+    H --> I[Jobs for you page]
+    H --> J[Daily email 07:50]
+```
+
+1. **Career fit** first: an intern never sees senior roles, and a student never sees jobs that require the degree they are still earning (except internships). The levels a person accepts are editable in the profile.
+2. **Semantic similarity**: profile and postings become embeddings (`bge-m3` on the project's VPS), compared with cosine similarity in PHP (shared hosting has no vector database). The scale was calibrated on production data.
+3. **Score in code**, never by the LLM: requirements are compared with the whole profile text, unknown information gets partial credit, and sensitive data (disability) is never read. Every point of the score can be explained, and the page shows what you have and what is missing.
 
 ## Tech stack
 
