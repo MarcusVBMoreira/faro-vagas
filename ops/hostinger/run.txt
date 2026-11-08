@@ -1,1 +1,1 @@
-09-preparar-match.sh
+10-diagnostico-match.sh
