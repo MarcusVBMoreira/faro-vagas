@@ -119,7 +119,7 @@ Job collection needs free API keys (`ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `JOOBLE_A
 Useful commands:
 
 ```bash
-php artisan test                         # 160+ tests
+php artisan test                         # 150+ tests
 php artisan faro:fetch-jobs              # collect jobs now
 php artisan faro:compute-matches --sync  # recalculate "jobs for you"
 php artisan faro:send-digests            # send the daily email
