@@ -172,11 +172,16 @@ erDiagram
 | `job_sources` | Job sources. Each `type` gets its own connector. |
 | `job_postings` | Collected postings (and private ones a user added by hand, with `user_id`). Field, level, minimum education, contract, work model, city, disability-inclusive and international flags, and `last_seen_at` to close jobs that disappear from the source. It isn't called `jobs` because that table is Laravel's queue. |
 | `job_posting_skill` | Skills of each posting, split into required and nice-to-have. |
-| `job_matches` | Result of the match funnel: similarity (embeddings) plus score, strengths and gaps. |
-| `applications` | Applications on the Kanban board, with their position inside each column. |
+| `job_matches` | Result of the match funnel, the best 50 per person: similarity (embeddings), score, strengths and gaps (stored as keys and translated at display time), and the person's feedback (`good`/`bad`; `dismissed_at` hides the job for good). |
+| `applications` | Applications on the Kanban board, with their position inside each column, notes and `applied_at` (set when the card leaves "saved"). |
 | `application_events` | Status change history, created automatically by the `Application` model. |
 | `ai_usage_logs` | Every AI call, to track cost and limit usage per user. |
 | `jobs`, `failed_jobs`, `cache`, `sessions`... | Laravel infrastructure (queue, cache and sessions in the database itself, no Redis needed). |
+
+## Matching fields
+
+- `profiles.accepted_levels`: job levels the person wants (default: desired level and its neighbours; students get internship, trainee and junior). `matches_computed_at`, `matches_hidden` (jobs left out by level or degree), `embedding` + `embedding_hash` (the vector is regenerated only when the profile text changes), `accepts_international`, `last_digest_at`.
+- `job_postings.embedded_at`, `extracted_at` (AI pass done), `is_international`, `is_pcd`, `last_seen_at`, `user_id` (private posting added by hand).
 
 ## Decisions
 

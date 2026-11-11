@@ -42,4 +42,18 @@ class HomePageTest extends TestCase
     {
         $this->get('/up')->assertOk();
     }
+
+    public function test_home_shows_live_numbers_and_finished_features(): void
+    {
+        \App\Models\JobPosting::factory()->count(3)->create();
+        \App\Models\JobPosting::factory()->create(['status' => 'closed']);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('3 vagas ativas agora')
+            ->assertSee('Quadro de candidaturas')
+            ->assertSee('Match com nota, pontos fortes e o que falta')
+            ->assertDontSee('Semana 2')
+            ->assertDontSee('Beta');
+    }
 }

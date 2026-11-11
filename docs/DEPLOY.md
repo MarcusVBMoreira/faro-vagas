@@ -133,6 +133,19 @@ hPanel → Advanced → **Cron Jobs** → custom command, every minute:
 
 The `cron/schedule.sh` script does the `cd`, runs `php artisan schedule:run` and writes the output to `storage/logs/cron.log`. The hPanel field didn't handle redirections (`>> ... 2>&1`) well when typed directly in the command.
 
+## What the scheduler runs
+Everything hangs off that single cron entry (`routes/console.php`):
+
+| When | What |
+|---|---|
+| every minute | queue worker (`default` first, then the low-priority `jobs` queue) and a heartbeat |
+| every 15 min | embeddings for new postings |
+| hourly (:25) | recalculate matches |
+| 05:40 | `faro:fetch-jobs` (Adzuna, Jooble, Remotive, GitHub) |
+| 07:50 | `faro:send-digests` (daily email) |
+
+`ops/hostinger/` holds read-only check scripts (collection summary, match score breakdown, mail login, failed jobs). The `hostinger-ops.yml` workflow runs the one named in `run.txt`, or any of them from the Actions tab. They never print secrets: the repository is public.
+
 ## VPS (AI endpoint)
 The AI server is managed by versioned scripts in `ops/vps/`, run by the `vps-ops.yml` workflow when they (or `ops/vps/run.txt`) change on `main`. `04-ia-https-token.sh` configures nginx, HTTPS, the bearer token and the 600 s timeouts that long résumé analyses need.
 

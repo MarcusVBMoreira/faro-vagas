@@ -1,4 +1,10 @@
 @php
+    // Números de verdade, guardados por 10 minutos para a página inicial continuar leve
+    $stats = \Illuminate\Support\Facades\Cache::remember('home.stats', 600, fn () => [
+        'jobs' => \App\Models\JobPosting::active()->whereNull('user_id')->count(),
+        'areas' => \App\Models\JobPosting::active()->whereNotNull('area')->distinct()->count('area'),
+        'new' => \App\Models\JobPosting::active()->whereNull('user_id')->where('created_at', '>=', now()->subDay())->count(),
+    ]);
     $areaIcons = [
         'administracao', 'comercial', 'saude', 'logistica', 'industria', 'educacao',
         'tecnologia', 'gastronomia', 'construcao', 'contabilidade', 'atendimento', 'beleza',
@@ -43,7 +49,11 @@
             <div>
                 <p class="mb-5 inline-flex items-center gap-2 rounded-full border border-noite-line px-3 py-1 text-xs font-medium text-white/80">
                     <span class="h-1.5 w-1.5 rounded-full bg-farol"></span>
-                    {{ __('Beta · vagas de todas as áreas, do primeiro emprego à gerência') }}
+                    @if ($stats['jobs'] > 0)
+                        {{ trans_choice(':count vaga ativa agora, de todas as áreas|:count vagas ativas agora, de todas as áreas', $stats['jobs'], ['count' => number_format($stats['jobs'], 0, ',', '.')]) }}
+                    @else
+                        {{ __('Vagas de todas as áreas, do primeiro emprego à gerência') }}
+                    @endif
                 </p>
                 <h1 class="font-display text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
                     {{ __('Pare de procurar vaga.') }}<br>
@@ -106,14 +116,14 @@
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2"/><path d="M10.5 7.5a6.4 6.4 0 0 1 0 9"/><path d="M14.5 4a11.3 11.3 0 0 1 0 16"/></svg>
                 </span>
                 <h3 class="mt-5 font-display text-xl font-semibold">{{ __('2. O Faro procura') }}</h3>
-                <p class="mt-2 text-ink-muted">{{ __('Todo dia o sistema coleta vagas novas de fontes públicas e organiza cada uma: área, nível, contrato, modalidade, cidade e requisitos.') }}</p>
+                <p class="mt-2 text-ink-muted">{{ __('Todo dia o sistema coleta vagas novas da Grande São Paulo e remotas e organiza cada uma: área, nível, contrato, modalidade, cidade e requisitos.') }}</p>
             </li>
             <li class="rounded-lg border border-line bg-raised p-6">
                 <span class="flex h-10 w-10 items-center justify-center rounded-md bg-noite text-farol">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                 </span>
                 <h3 class="mt-5 font-display text-xl font-semibold">{{ __('3. Veja o porquê') }}</h3>
-                <p class="mt-2 text-ink-muted">{{ __('Cada vaga recomendada vem com uma nota de compatibilidade, seus pontos fortes e o que falta.') }}</p>
+                <p class="mt-2 text-ink-muted">{{ __('Cada vaga recomendada vem com uma nota de 0 a 100, o que você já tem e o que falta. Só entram vagas do seu nível.') }}</p>
             </li>
         </ol>
     </section>
@@ -134,7 +144,20 @@
 
     {{-- Recursos --}}
     <section class="mx-auto max-w-6xl px-6 py-20">
-        <div class="grid gap-6 md:grid-cols-3">
+        <h2 class="font-display text-3xl font-bold tracking-tight md:text-4xl">{{ __('Tudo para a sua busca, num lugar só') }}</h2>
+        <div class="mt-10 grid gap-x-6 gap-y-10 md:grid-cols-3">
+            <div>
+                <h3 class="font-display text-lg font-semibold">{{ __('Quadro de candidaturas') }}</h3>
+                <p class="mt-2 text-sm text-ink-muted">{{ __('Salve as vagas e acompanhe cada etapa, da candidatura à proposta, arrastando os cartões. Com espaço para anotar datas e contatos.') }}</p>
+            </div>
+            <div>
+                <h3 class="font-display text-lg font-semibold">{{ __('Vagas novas no seu e-mail') }}</h3>
+                <p class="mt-2 text-sm text-ink-muted">{{ __('Toda manhã, as melhores vagas novas para o seu perfil. Só chega quando tem vaga boa, e você cancela com um clique.') }}</p>
+            </div>
+            <div>
+                <h3 class="font-display text-lg font-semibold">{{ __('O que vale a pena aprender') }}</h3>
+                <p class="mt-2 text-sm text-ink-muted">{{ __('O Faro mostra as habilidades que mais aparecem nas suas vagas e que você ainda não tem.') }}</p>
+            </div>
             <div>
                 <h3 class="font-display text-lg font-semibold">{{ __('Seus dados ficam com você') }}</h3>
                 <p class="mt-2 text-sm text-ink-muted">{{ __('A IA roda num servidor próprio do projeto. Seu currículo não vai para serviços de IA de terceiros, e você pode apagar tudo quando quiser.') }}</p>
@@ -150,21 +173,35 @@
         </div>
     </section>
 
-    {{-- Status do projeto --}}
+    {{-- O projeto --}}
     <section id="status" class="border-t border-line bg-sunken">
         <div class="mx-auto grid max-w-6xl gap-10 px-6 py-20 md:grid-cols-2">
             <div>
                 <h2 class="font-display text-3xl font-bold tracking-tight">{{ __('Construído em público') }}</h2>
-                <p class="mt-3 text-ink-muted">{{ __('O Faro é um projeto de portfólio em desenvolvimento. Cada etapa vai para o GitHub e para o ar ao mesmo tempo, com testes automáticos e deploy contínuo.') }}</p>
-                <a href="{{ config('faro.repo_url') }}" class="btn btn-secondary mt-6" target="_blank" rel="noopener">{{ __('Ver código e roadmap') }}</a>
+                <p class="mt-3 text-ink-muted">{{ __('O Faro é um projeto de portfólio construído em um mês, com o código aberto. Cada etapa foi para o GitHub e para o ar ao mesmo tempo, com testes automáticos e deploy contínuo.') }}</p>
+                <a href="{{ config('faro.repo_url') }}" class="btn btn-secondary mt-6" target="_blank" rel="noopener">{{ __('Ver o código no GitHub') }}</a>
+                @if ($stats['jobs'] > 0)
+                    <dl class="mt-8 grid max-w-md grid-cols-3 gap-3">
+                        <div><dt class="text-xs text-ink-muted">{{ __('Vagas ativas') }}</dt><dd class="font-display text-2xl font-bold">{{ number_format($stats['jobs'], 0, ',', '.') }}</dd></div>
+                        <div><dt class="text-xs text-ink-muted">{{ __('Novas em 24 h') }}</dt><dd class="font-display text-2xl font-bold">{{ number_format($stats['new'], 0, ',', '.') }}</dd></div>
+                        <div><dt class="text-xs text-ink-muted">{{ __('Áreas com vagas') }}</dt><dd class="font-display text-2xl font-bold">{{ $stats['areas'] }}</dd></div>
+                    </dl>
+                @endif
             </div>
             <ul class="space-y-3 text-sm">
-                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-success"></span> {{ __('Identidade visual, banco de dados e deploy automático') }}</li>
-                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-success"></span> {{ __('IA própria no servidor do projeto (sem enviar currículos a terceiros)') }}</li>
-                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-success"></span> {{ __('Semana 1: contas, upload de currículo e perfil com IA para todas as áreas') }}</li>
-                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-farol"></span> {{ __('Semana 2: coleta automática de vagas') }}</li>
-                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-line"></span> {{ __('Semana 3: match com IA') }}</li>
-                <li class="flex items-center gap-3 rounded-md bg-raised p-4"><span class="h-2.5 w-2.5 rounded-full bg-line"></span> {{ __('Semana 4: Kanban, e-mail diário e acabamento') }}</li>
+                @foreach ([
+                    __('Contas com confirmação por e-mail e verificação em duas etapas'),
+                    __('Perfil montado pela IA a partir do currículo, para todas as áreas'),
+                    __('IA própria no servidor do projeto (sem enviar currículos a terceiros)'),
+                    __('Coleta diária de vagas da Grande São Paulo e remotas'),
+                    __('Match com nota, pontos fortes e o que falta'),
+                    __('Quadro de candidaturas e e-mail diário de vagas'),
+                ] as $done)
+                    <li class="flex items-center gap-3 rounded-md bg-raised p-4">
+                        <svg class="h-4 w-4 shrink-0 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        {{ $done }}
+                    </li>
+                @endforeach
             </ul>
         </div>
     </section>

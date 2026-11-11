@@ -16,6 +16,7 @@ class RegionTest extends TestCase
         $this->assertSame(['city' => 'São Bernardo do Campo', 'state' => 'SP', 'remote' => false], Region::parse('sao bernardo do campo'));
         $this->assertSame(['city' => 'Campinas', 'state' => 'SP', 'remote' => false], Region::parse('Campinas, SP'));
         $this->assertSame(['city' => 'Rio de Janeiro', 'state' => 'RJ', 'remote' => false], Region::parse('Rio de Janeiro, RJ'));
+        $this->assertSame(['city' => null, 'state' => 'SP', 'remote' => false], Region::parse('Estado de São Paulo, SP'));
         $this->assertTrue(Region::parse('Remoto')['remote']);
         $this->assertTrue(Region::parse('Home Office - Brasil')['remote']);
         $this->assertSame(['city' => null, 'state' => null, 'remote' => false], Region::parse(''));

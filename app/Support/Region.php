@@ -40,7 +40,13 @@ final class Region
         $state = null;
 
         foreach ($parts as $i => $part) {
+            $part = trim(preg_replace('/^estado d[eo]\s+/iu', '', $part, 1, $wasState));
             $p = self::plain($part);
+            if ($wasState && isset(Brazil::STATE_NAMES[$p])) {   // "Estado de São Paulo" é o estado, não a cidade
+                $state ??= Brazil::STATE_NAMES[$p];
+
+                continue;
+            }
             $isUf = in_array(strtoupper($part), Brazil::STATES, true) && mb_strlen($part) === 2;
             $isStateName = isset(Brazil::STATE_NAMES[$p]);
 

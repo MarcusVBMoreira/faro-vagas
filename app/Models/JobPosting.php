@@ -71,6 +71,9 @@ class JobPosting extends Model
 
     public function locationLabel(): ?string
     {
+        if ($this->city && str_starts_with(mb_strtolower($this->city), 'estado d')) {
+            return $this->state; // registros antigos em que o estado veio no lugar da cidade
+        }
         if ($this->city || $this->state) {
             return collect([$this->city, $this->state])->filter()->implode(', ');
         }

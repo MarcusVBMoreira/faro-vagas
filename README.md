@@ -23,6 +23,10 @@ The site is available in **Portuguese, English and Spanish** (it targets the Bra
 
 > Portfolio project, built in public in one month. See how it was planned and shipped week by week in the [roadmap](docs/ROADMAP.md).
 
+<p align="center">
+  <img src="docs/demo-candidaturas.gif" alt="Moving a saved job through the stages of the applications board" width="880">
+</p>
+
 ## Features
 
 - [x] Sign up with **email verification by 6-digit code**, optional **two-step login** by email, brute-force throttling, password reset
@@ -110,7 +114,17 @@ composer run dev              # http://localhost:8000 (server, queue, logs and V
 To use XAMPP's MySQL, set `DB_CONNECTION=mysql`, `DB_DATABASE=faro`, `DB_USERNAME=root` and an empty `DB_PASSWORD` in `.env`.
 Résumé parsing needs `AI_API_KEY` (the token of your Ollama endpoint) or your own local Ollama with `AI_BASE_URL=http://localhost:11434`.
 
-Tests: `php artisan test`
+Job collection needs free API keys (`ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `JOOBLE_API_KEY`); without them those sources are skipped and Remotive and GitHub still work.
+
+Useful commands:
+
+```bash
+php artisan test                         # 160+ tests
+php artisan faro:fetch-jobs              # collect jobs now
+php artisan faro:compute-matches --sync  # recalculate "jobs for you"
+php artisan faro:send-digests            # send the daily email
+php artisan faro:diagnostico             # health check (database, AI, mail, cron, queue)
+```
 
 ## Project structure
 
@@ -124,9 +138,17 @@ app/Services/Auth/             6-digit email codes (sign-up verification and 2FA
 lang/                          pt_BR, en and es (JSON keys are the Portuguese sentences)
 app/Services/SkillCatalog      "js" → JavaScript, "C#" → c-sharp: one skill vocabulary
 app/Jobs/AnalyzeResume         background job: PDF → AI → profile
+app/Contracts/JobSourceConnector  one interface per job source
+app/Services/Jobs/             connectors (Adzuna, Jooble, Remotive, GitHub), collector, classifier, AI analyzer
+app/Support/Region.php         Greater São Paulo (39 cities) + remote filter
+app/Services/Matching/         CareerFit (levels, degree), MatchScorer, MatchService, embeddings, daily digest
+app/Http/Controllers/          profile, jobs, matches ("Para você"), applications board
+resources/js/board.js          drag and drop for the applications board (SortableJS)
+routes/console.php             scheduler: queue, job collection, embeddings, matches, digest, diagnostics
 database/                      migrations, seeders and factories
 docs/                          roadmap, database model, deploy guide, brand
 ops/vps/                       VPS scripts (benchmark, swap, nginx + HTTPS + token)
+ops/hostinger/                 production checks run by GitHub Actions (collection, match diagnosis, mail)
 design/                        brand assets and screenshots (not deployed)
 ```
 

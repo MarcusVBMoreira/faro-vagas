@@ -64,13 +64,13 @@ Scope decision: **Greater São Paulo (39 cities) + remote jobs**, every field. `
 - [x] Recalculated when the profile changes and every hour
 - **Deliverable:** the heart of the project working.
 
-## Week 4 · Product and polish
+## Week 4 · Product and polish ✅
 - [x] Application Kanban board (SortableJS drag and drop, plus a selector that works without JavaScript), notes, stage history
 - [x] Daily email digest at 07:50 with up to 5 new jobs (score ≥ 55), signed unsubscribe link
 - [x] "What to learn": most frequent gaps across the person's best matches
 - [x] Career-stage filter (accepted levels, degree requirements) after real-user feedback
 - [x] README with the match funnel diagram
-- [ ] Demo GIF in the README
+- [x] Demo GIF in the README and home page updated with live numbers
 - [ ] Faster résumé analysis on the VPS (smaller prompt, streaming, model tuning)
 - **Deliverable:** portfolio-ready project.
 

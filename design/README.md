@@ -6,7 +6,7 @@ Faro's brand and design material. **This folder lives only on GitHub:** the depl
 |---|---|
 | `logo/` | SVG logos (vector, source of truth) and `png/` exports for social media, LinkedIn and presentations |
 | `identidade/` | `guia-da-marca.md` (brand guide in Portuguese: voice, logo, colors, typography, shapes), `tokens.json` (every color, font, spacing and radius, light and dark themes) and the identity cover |
-| `telas/` | Screenshots and mockups of the site, version by version |
+| `telas/` | Screenshots of the site (home, applications board) |
 | `ferramentas/` | Scripts used to generate the logo and check color contrast |
 
 ## Logos
